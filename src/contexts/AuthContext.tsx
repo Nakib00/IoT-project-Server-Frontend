@@ -2,16 +2,17 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { useToast } from '@/hooks/use-toast';
 
 interface User {
-  id: string;
+  userId: string;
   email: string;
   name: string;
+  phone?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   token: string | null;
   login: (email: string, password: string) => Promise<boolean>;
-  register: (name: string, email: string, password: string) => Promise<boolean>;
+  register: (name: string, email: string, phone: string, password: string) => Promise<boolean>;
   logout: () => void;
   loading: boolean;
 }
@@ -51,8 +52,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setLoading(true);
       
-      // Simulate API call - replace with actual backend call
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch('http://localhost:3000/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -60,49 +60,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         body: JSON.stringify({ email, password }),
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        const { token: authToken, user: userData } = data;
+      const data = await response.json();
+
+      if (data.success) {
+        const { token, userId, name, email: userEmail } = data.data;
+        const userData = { userId, name, email: userEmail };
         
-        setToken(authToken);
+        setToken(token);
         setUser(userData);
-        localStorage.setItem('iot_token', authToken);
+        localStorage.setItem('iot_token', token);
         localStorage.setItem('iot_user', JSON.stringify(userData));
         
         toast({
           title: "Welcome back!",
-          description: "You have successfully logged in.",
+          description: data.message,
         });
         
         return true;
       } else {
-        // For demo purposes, allow any email/password combination
-        if (email && password) {
-          const mockUser = {
-            id: '1',
-            email,
-            name: email.split('@')[0],
-          };
-          const mockToken = 'demo-jwt-token-' + Date.now();
-          
-          setToken(mockToken);
-          setUser(mockUser);
-          localStorage.setItem('iot_token', mockToken);
-          localStorage.setItem('iot_user', JSON.stringify(mockUser));
-          
-          toast({
-            title: "Welcome back!",
-            description: "You have successfully logged in (Demo mode).",
-          });
-          
-          return true;
-        }
-        throw new Error('Invalid credentials');
+        throw new Error(data.message || 'Login failed');
       }
     } catch (error) {
       toast({
         title: "Login Failed",
-        description: "Please check your credentials and try again.",
+        description: error instanceof Error ? error.message : "Please check your credentials and try again.",
         variant: "destructive",
       });
       return false;
@@ -111,62 +92,42 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const register = async (name: string, email: string, password: string): Promise<boolean> => {
+  const register = async (name: string, email: string, phone: string, password: string): Promise<boolean> => {
     try {
       setLoading(true);
       
-      // Simulate API call - replace with actual backend call
-      const response = await fetch('/api/auth/register', {
+      const response = await fetch('http://localhost:3000/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, phone, password }),
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        const { token: authToken, user: userData } = data;
+      const data = await response.json();
+
+      if (data.success) {
+        const { token, userId } = data.data;
+        const userData = { userId, name, email, phone };
         
-        setToken(authToken);
+        setToken(token);
         setUser(userData);
-        localStorage.setItem('iot_token', authToken);
+        localStorage.setItem('iot_token', token);
         localStorage.setItem('iot_user', JSON.stringify(userData));
         
         toast({
           title: "Account Created!",
-          description: "Your account has been created successfully.",
+          description: data.message,
         });
         
         return true;
       } else {
-        // For demo purposes, allow any registration
-        if (name && email && password) {
-          const mockUser = {
-            id: '1',
-            email,
-            name,
-          };
-          const mockToken = 'demo-jwt-token-' + Date.now();
-          
-          setToken(mockToken);
-          setUser(mockUser);
-          localStorage.setItem('iot_token', mockToken);
-          localStorage.setItem('iot_user', JSON.stringify(mockUser));
-          
-          toast({
-            title: "Account Created!",
-            description: "Your account has been created successfully (Demo mode).",
-          });
-          
-          return true;
-        }
-        throw new Error('Registration failed');
+        throw new Error(data.message || 'Registration failed');
       }
     } catch (error) {
       toast({
         title: "Registration Failed",
-        description: "Please try again with valid information.",
+        description: error instanceof Error ? error.message : "Please try again with valid information.",
         variant: "destructive",
       });
       return false;

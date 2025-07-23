@@ -27,30 +27,16 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   onEdit,
   onDelete,
 }) => {
-  const getStatusColor = (status: Project['status']) => {
-    switch (status) {
-      case 'online':
-        return 'bg-success text-white';
-      case 'offline':
-        return 'bg-muted text-muted-foreground';
-      case 'error':
-        return 'bg-destructive text-destructive-foreground';
-      default:
-        return 'bg-muted text-muted-foreground';
-    }
+  const getStatusColor = () => {
+    return project.totalsensor > 0 ? 'bg-success text-white' : 'bg-muted text-muted-foreground';
   };
 
-  const getStatusIcon = (status: Project['status']) => {
-    switch (status) {
-      case 'online':
-        return <Wifi className="h-3 w-3" />;
-      case 'offline':
-        return <WifiOff className="h-3 w-3" />;
-      case 'error':
-        return <AlertCircle className="h-3 w-3" />;
-      default:
-        return <WifiOff className="h-3 w-3" />;
-    }
+  const getStatusIcon = () => {
+    return project.totalsensor > 0 ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />;
+  };
+
+  const getStatusText = () => {
+    return project.totalsensor > 0 ? 'Active' : 'No Sensors';
   };
 
   return (
@@ -58,14 +44,14 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div>
-            <CardTitle className="text-lg font-semibold">{project.name}</CardTitle>
+            <CardTitle className="text-lg font-semibold">{project.projectName}</CardTitle>
             <CardDescription className="mt-1 line-clamp-2">
               {project.description}
             </CardDescription>
           </div>
-          <Badge className={`${getStatusColor(project.status)} flex items-center gap-1`}>
-            {getStatusIcon(project.status)}
-            {project.status}
+          <Badge className={`${getStatusColor()} flex items-center gap-1`}>
+            {getStatusIcon()}
+            {getStatusText()}
           </Badge>
         </div>
       </CardHeader>
@@ -73,11 +59,11 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div className="flex items-center gap-2 text-muted-foreground">
             <Cpu className="h-4 w-4" />
-            <span>{project.board}</span>
+            <span>{project.developmentBoard}</span>
           </div>
           <div className="flex items-center gap-2 text-muted-foreground">
             <Activity className="h-4 w-4" />
-            <span>{project.sensorsCount} sensors</span>
+            <span>{project.totalsensor} sensors</span>
           </div>
         </div>
 

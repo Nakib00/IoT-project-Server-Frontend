@@ -3,14 +3,17 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
 export interface Project {
-  id: string;
-  name: string;
+  projectId: string;
+  projectName: string;
   description: string;
-  board: string;
+  developmentBoard: string;
   createdAt: string;
   updatedAt: string;
-  sensorsCount: number;
-  status: 'online' | 'offline' | 'error';
+  totalsensor: number;
+  sensors?: Array<{
+    id: string;
+    title: string;
+  }>;
 }
 
 export interface Sensor {
@@ -37,46 +40,29 @@ export const useProjects = () => {
     try {
       setLoading(true);
       
-      // Simulate API call - replace with actual backend
-      const response = await fetch('/api/projects', {
+      if (!token) return;
+      
+      const userData = localStorage.getItem('iot_user');
+      if (!userData) return;
+      
+      const user = JSON.parse(userData);
+      const response = await fetch(`http://localhost:3000/projects/${user.userId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        setProjects(data);
+      const data = await response.json();
+
+      if (data.success) {
+        setProjects(data.data.projects);
       } else {
-        // Demo data
-        const demoProjects: Project[] = [
-          {
-            id: '1',
-            name: 'Smart Home Sensors',
-            description: 'Temperature and humidity monitoring for home automation',
-            board: 'ESP32',
-            createdAt: '2024-01-15T10:00:00Z',
-            updatedAt: '2024-01-20T15:30:00Z',
-            sensorsCount: 3,
-            status: 'online',
-          },
-          {
-            id: '2',
-            name: 'Garden Monitor',
-            description: 'Soil moisture and light sensors for garden management',
-            board: 'ESP8266',
-            createdAt: '2024-01-10T08:00:00Z',
-            updatedAt: '2024-01-18T12:00:00Z',
-            sensorsCount: 2,
-            status: 'offline',
-          },
-        ];
-        setProjects(demoProjects);
+        throw new Error(data.message || 'Failed to fetch projects');
       }
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to fetch projects",
+        description: error instanceof Error ? error.message : "Failed to fetch projects",
         variant: "destructive",
       });
     } finally {
@@ -84,9 +70,13 @@ export const useProjects = () => {
     }
   };
 
-  const createProject = async (projectData: Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'sensorsCount' | 'status'>) => {
+  const createProject = async (projectData: { projectName: string; description: string; developmentBoard: string }) => {
     try {
-      const response = await fetch('/api/projects', {
+      const userData = localStorage.getItem('iot_user');
+      if (!userData) throw new Error('User not found');
+      
+      const user = JSON.parse(userData);
+      const response = await fetch(`http://localhost:3000/create-project/${user.userId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -95,44 +85,31 @@ export const useProjects = () => {
         body: JSON.stringify(projectData),
       });
 
-      if (response.ok) {
-        const newProject = await response.json();
-        setProjects(prev => [...prev, newProject]);
+      const data = await response.json();
+
+      if (data.success) {
+        await fetchProjects(); // Refresh the projects list
         toast({
           title: "Success",
-          description: "Project created successfully",
+          description: data.message,
         });
-        return newProject;
+        return data.data;
       } else {
-        // Demo mode
-        const newProject: Project = {
-          id: Date.now().toString(),
-          ...projectData,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          sensorsCount: 0,
-          status: 'offline',
-        };
-        setProjects(prev => [...prev, newProject]);
-        toast({
-          title: "Success",
-          description: "Project created successfully (Demo mode)",
-        });
-        return newProject;
+        throw new Error(data.message || 'Failed to create project');
       }
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to create project",
+        description: error instanceof Error ? error.message : "Failed to create project",
         variant: "destructive",
       });
       return null;
     }
   };
 
-  const updateProject = async (id: string, projectData: Partial<Project>) => {
+  const updateProject = async (projectId: string, projectData: { projectName?: string; description?: string; developmentBoard?: string }) => {
     try {
-      const response = await fetch(`/api/projects/${id}`, {
+      const response = await fetch(`http://localhost:3000/update-project/${projectId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -141,62 +118,51 @@ export const useProjects = () => {
         body: JSON.stringify(projectData),
       });
 
-      if (response.ok) {
-        const updatedProject = await response.json();
-        setProjects(prev => prev.map(p => p.id === id ? updatedProject : p));
+      const data = await response.json();
+
+      if (data.success) {
+        await fetchProjects(); // Refresh the projects list
         toast({
           title: "Success",
-          description: "Project updated successfully",
+          description: data.message,
         });
-        return updatedProject;
+        return data.data;
       } else {
-        // Demo mode
-        setProjects(prev => prev.map(p => 
-          p.id === id 
-            ? { ...p, ...projectData, updatedAt: new Date().toISOString() }
-            : p
-        ));
-        toast({
-          title: "Success",
-          description: "Project updated successfully (Demo mode)",
-        });
+        throw new Error(data.message || 'Failed to update project');
       }
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to update project",
+        description: error instanceof Error ? error.message : "Failed to update project",
         variant: "destructive",
       });
     }
   };
 
-  const deleteProject = async (id: string) => {
+  const deleteProject = async (projectId: string) => {
     try {
-      const response = await fetch(`/api/projects/${id}`, {
+      const response = await fetch(`http://localhost:3000/project/${projectId}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
-      if (response.ok) {
-        setProjects(prev => prev.filter(p => p.id !== id));
+      const data = await response.json();
+
+      if (data.success) {
+        setProjects(prev => prev.filter(p => p.projectId !== projectId));
         toast({
           title: "Success",
-          description: "Project deleted successfully",
+          description: data.message,
         });
       } else {
-        // Demo mode
-        setProjects(prev => prev.filter(p => p.id !== id));
-        toast({
-          title: "Success",
-          description: "Project deleted successfully (Demo mode)",
-        });
+        throw new Error(data.message || 'Failed to delete project');
       }
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to delete project",
+        description: error instanceof Error ? error.message : "Failed to delete project",
         variant: "destructive",
       });
     }

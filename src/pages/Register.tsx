@@ -10,6 +10,7 @@ import { Zap, Eye, EyeOff } from 'lucide-react';
 const Register = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -31,7 +32,7 @@ const Register = () => {
     
     setIsLoading(true);
     
-    const success = await register(name, email, password);
+    const success = await register(name, email, phone, password);
     if (success) {
       navigate('/dashboard');
     }
@@ -79,6 +80,18 @@ const Register = () => {
                   placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="Enter your phone number"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
                   required
                 />
               </div>

@@ -23,21 +23,21 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   const filteredProjects = projects.filter(project =>
-    project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    project.projectName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     project.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleViewProject = (project: Project) => {
-    navigate(`/project/${project.id}`);
+    navigate(`/project/${project.projectId}`);
   };
 
   const handleEditProject = (project: Project) => {
-    navigate(`/project/${project.id}/edit`);
+    navigate(`/project/${project.projectId}/edit`);
   };
 
   const handleDeleteProject = async (project: Project) => {
-    if (window.confirm(`Are you sure you want to delete "${project.name}"?`)) {
-      await deleteProject(project.id);
+    if (window.confirm(`Are you sure you want to delete "${project.projectName}"?`)) {
+      await deleteProject(project.projectId);
     }
   };
 
@@ -112,7 +112,7 @@ const Dashboard = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredProjects.map((project) => (
               <ProjectCard
-                key={project.id}
+                key={project.projectId}
                 project={project}
                 onView={handleViewProject}
                 onEdit={handleEditProject}

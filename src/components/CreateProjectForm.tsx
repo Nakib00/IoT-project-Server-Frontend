@@ -37,9 +37,9 @@ export const CreateProjectForm: React.FC<CreateProjectFormProps> = ({ onSuccess 
     
     try {
       await createProject({
-        name: name.trim(),
+        projectName: name.trim(),
         description: description.trim(),
-        board,
+        developmentBoard: board,
       });
       
       // Reset form
