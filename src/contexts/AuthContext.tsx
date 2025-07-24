@@ -63,8 +63,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const data = await response.json();
 
       if (data.success) {
-        const { token, userId, name, email: userEmail } = data.data;
-        const userData = { userId, name, email: userEmail };
+        const { token, userId, name, email } = data.data;
+        const userData = { userId, name, email };
         
         setToken(token);
         setUser(userData);
