@@ -34,7 +34,7 @@ const ProjectView = () => {
     };
 
     loadProject();
-  }, [projectId, fetchProject]);
+  }, [projectId]); // Removed fetchProject from dependencies to prevent infinite loop
 
   const handleEdit = () => {
     setShowEditDialog(true);
@@ -44,8 +44,10 @@ const ProjectView = () => {
     setShowEditDialog(false);
     // Refresh project data
     if (projectId) {
+      setLoading(true);
       const updatedProject = await fetchProject(projectId);
       setProject(updatedProject);
+      setLoading(false);
     }
   };
 
