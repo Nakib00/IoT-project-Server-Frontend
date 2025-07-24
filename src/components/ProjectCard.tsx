@@ -68,7 +68,10 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         </div>
 
         <div className="text-xs text-muted-foreground">
-          Last updated {formatDistanceToNow(new Date(project.updatedAt), { addSuffix: true })}
+          Last updated {project.updatedAt && !isNaN(new Date(project.updatedAt).getTime()) 
+            ? formatDistanceToNow(new Date(project.updatedAt), { addSuffix: true })
+            : 'Unknown'
+          }
         </div>
 
         <div className="flex items-center gap-2 pt-2">

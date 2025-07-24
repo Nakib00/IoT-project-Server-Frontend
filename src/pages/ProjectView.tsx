@@ -223,14 +223,20 @@ const ProjectView = () => {
                 <div>
                   <p className="text-sm font-medium text-foreground">Created</p>
                   <p className="text-sm text-muted-foreground">
-                    {formatDistanceToNow(new Date(project.createdAt), { addSuffix: true })}
+                    {project.createdAt && !isNaN(new Date(project.createdAt).getTime())
+                      ? formatDistanceToNow(new Date(project.createdAt), { addSuffix: true })
+                      : 'Unknown'
+                    }
                   </p>
                 </div>
                 
                 <div>
                   <p className="text-sm font-medium text-foreground">Last Updated</p>
                   <p className="text-sm text-muted-foreground">
-                    {formatDistanceToNow(new Date(project.updatedAt), { addSuffix: true })}
+                    {project.updatedAt && !isNaN(new Date(project.updatedAt).getTime())
+                      ? formatDistanceToNow(new Date(project.updatedAt), { addSuffix: true })
+                      : 'Unknown'
+                    }
                   </p>
                 </div>
               </CardContent>
