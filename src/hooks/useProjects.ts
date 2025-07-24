@@ -88,7 +88,10 @@ export const useProjects = () => {
       const data = await response.json();
 
       if (data.success) {
-        await fetchProjects(); // Refresh the projects list
+        // Add the new project to the current projects list immediately
+        const newProject = data.data.project;
+        setProjects(prev => [...prev, newProject]);
+        
         toast({
           title: "Success",
           description: data.message,

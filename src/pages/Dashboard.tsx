@@ -15,6 +15,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { CreateProjectForm } from '@/components/CreateProjectForm';
+import { EditProjectForm } from '@/components/EditProjectForm';
 
 const Dashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -31,8 +32,17 @@ const Dashboard = () => {
     navigate(`/project/${project.projectId}`);
   };
 
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+
   const handleEditProject = (project: Project) => {
-    navigate(`/project/${project.projectId}/edit`);
+    setEditingProject(project);
+    setShowEditDialog(true);
+  };
+
+  const handleEditSuccess = () => {
+    setShowEditDialog(false);
+    setEditingProject(null);
   };
 
   const handleDeleteProject = async (project: Project) => {
@@ -156,6 +166,21 @@ const Dashboard = () => {
               )}
             </div>
           </div>
+        )}
+
+        {/* Edit Project Dialog */}
+        {editingProject && (
+          <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+            <DialogContent className="sm:max-w-[600px]">
+              <DialogHeader>
+                <DialogTitle>Edit Project</DialogTitle>
+                <DialogDescription>
+                  Update your project information and settings.
+                </DialogDescription>
+              </DialogHeader>
+              <EditProjectForm project={editingProject} onSuccess={handleEditSuccess} />
+            </DialogContent>
+          </Dialog>
         )}
       </main>
     </div>
