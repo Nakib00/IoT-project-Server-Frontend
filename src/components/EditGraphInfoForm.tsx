@@ -2,12 +2,15 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useProjects, Sensor } from '@/hooks/useProjects';
 
 interface EditGraphInfoFormProps {
   sensor: Sensor;
   onSuccess: () => void;
 }
+
+const GRAPH_TYPE_OPTIONS = ["line", "bar","scatter"];
 
 export const EditGraphInfoForm: React.FC<EditGraphInfoFormProps> = ({ sensor, onSuccess }) => {
   const [title, setTitle] = useState(sensor.graphInfo.title);
@@ -53,7 +56,18 @@ export const EditGraphInfoForm: React.FC<EditGraphInfoFormProps> = ({ sensor, on
       </div>
       <div className="space-y-2">
         <Label htmlFor="graph-type">Graph Type</Label>
-        <Input id="graph-type" value={type} onChange={(e) => setType(e.target.value)} />
+        <Select value={type} onValueChange={setType}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select graph type" />
+          </SelectTrigger>
+          <SelectContent>
+            {GRAPH_TYPE_OPTIONS.map((option) => (
+              <SelectItem key={option} value={option}>
+                {option.charAt(0).toUpperCase() + option.slice(1)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
       <div className="space-y-2">
         <Label htmlFor="max-data-points">Max Data Points</Label>
