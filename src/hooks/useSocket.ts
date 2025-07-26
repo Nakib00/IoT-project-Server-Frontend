@@ -1,25 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuth } from '@/contexts/AuthContext';
-
-interface SensorData {
-  sensorId: string;
-  value: number;
-  timestamp: string;
-  type: string;
-}
+import { SensorData } from './useProjects';
 
 export const useSocket = () => {
   const [connected, setConnected] = useState(false);
-  const [sensorData, setSensorData] = useState<SensorData[]>([]);
+  const [sensorData, setSensorData] = useState<SensorData | null>(null);
   const socketRef = useRef<Socket | null>(null);
   const { token } = useAuth();
 
   useEffect(() => {
     if (!token) return;
 
-    // Initialize socket connection
-    socketRef.current = io(process.env.REACT_APP_SOCKET_URL || 'ws://localhost:3001', {
+    socketRef.current = io('http://localhost:3001', {
       auth: {
         token,
       },
@@ -38,11 +31,7 @@ export const useSocket = () => {
     });
 
     socket.on('sensor-data', (data: SensorData) => {
-      setSensorData(prev => {
-        const updated = [...prev, data];
-        // Keep only last 50 readings per sensor
-        return updated.slice(-50);
-      });
+      setSensorData(data);
     });
 
     socket.on('error', (error) => {
@@ -66,17 +55,10 @@ export const useSocket = () => {
     }
   };
 
-  const sendCommand = (sensorId: string, command: string, value?: any) => {
-    if (socketRef.current) {
-      socketRef.current.emit('sensor-command', { sensorId, command, value });
-    }
-  };
-
   return {
     connected,
     sensorData,
     joinProject,
     leaveProject,
-    sendCommand,
   };
 };
