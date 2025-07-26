@@ -2,6 +2,30 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
+export interface SensorData {
+  datetime: string;
+  value: number;
+}
+
+export interface GraphInfo {
+  title: string;
+  type: string;
+  maxDataPoints: number;
+  xAxisLabel: string;
+  yAxisLabel: string;
+}
+
+export interface Sensor {
+  id: string;
+  title: string;
+  typeOfPin: string;
+  pinNumber: string;
+  graphInfo: GraphInfo;
+  createdAt: string;
+  updatedAt: string;
+  data: SensorData[];
+}
+
 export interface Project {
   projectId: string;
   projectName: string;
@@ -10,24 +34,8 @@ export interface Project {
   createdAt: string;
   updatedAt: string;
   totalsensor: number;
-  sensors?: Array<{
-    id: string;
-    title: string;
-  }>;
-}
-
-export interface Sensor {
-  id: string;
-  projectId: string;
-  name: string;
-  type: 'temperature' | 'humidity' | 'pressure' | 'light' | 'motion' | 'gas' | 'custom';
-  pin: string;
-  unit: string;
-  minValue: number;
-  maxValue: number;
-  lastValue: number;
-  lastUpdate: string;
-  status: 'active' | 'inactive' | 'error';
+  token: string; 
+  sensordata?: Sensor[];
 }
 
 export const useProjects = () => {
@@ -39,21 +47,14 @@ export const useProjects = () => {
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      
       if (!token) return;
-      
       const userData = localStorage.getItem('iot_user');
       if (!userData) return;
-      
       const user = JSON.parse(userData);
       const response = await fetch(`http://localhost:3000/projects/${user.userId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
-
       const data = await response.json();
-
       if (data.success) {
         setProjects(data.data.projects);
       } else {
@@ -70,32 +71,41 @@ export const useProjects = () => {
     }
   };
 
+  const fetchProject = async (projectId: string) => {
+    try {
+      const response = await fetch(`http://localhost:3000/project/${projectId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await response.json();
+      if (data.success) {
+        return data.data.project;
+      } else {
+        throw new Error(data.message || 'Failed to fetch project');
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to fetch project",
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
+
   const createProject = async (projectData: { projectName: string; description: string; developmentBoard: string }) => {
     try {
       const userData = localStorage.getItem('iot_user');
       if (!userData) throw new Error('User not found');
-      
       const user = JSON.parse(userData);
       const response = await fetch(`http://localhost:3000/create-project/${user.userId}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(projectData),
       });
-
       const data = await response.json();
-
       if (data.success) {
-        // Add the new project to the current projects list immediately
-        const newProject = data.data.project;
-        setProjects(prev => [...prev, newProject]);
-        
-        toast({
-          title: "Success",
-          description: data.message,
-        });
+        setProjects(prev => [...prev, data.data.project]);
+        toast({ title: "Success", description: data.message });
         return data.data;
       } else {
         throw new Error(data.message || 'Failed to create project');
@@ -114,21 +124,13 @@ export const useProjects = () => {
     try {
       const response = await fetch(`http://localhost:3000/update-project/${projectId}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(projectData),
       });
-
       const data = await response.json();
-
       if (data.success) {
-        await fetchProjects(); // Refresh the projects list
-        toast({
-          title: "Success",
-          description: data.message,
-        });
+        await fetchProjects();
+        toast({ title: "Success", description: data.message });
         return data.data;
       } else {
         throw new Error(data.message || 'Failed to update project');
@@ -146,19 +148,12 @@ export const useProjects = () => {
     try {
       const response = await fetch(`http://localhost:3000/project/${projectId}`, {
         method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
-
       const data = await response.json();
-
       if (data.success) {
         setProjects(prev => prev.filter(p => p.projectId !== projectId));
-        toast({
-          title: "Success",
-          description: data.message,
-        });
+        toast({ title: "Success", description: data.message });
       } else {
         throw new Error(data.message || 'Failed to delete project');
       }
@@ -171,36 +166,100 @@ export const useProjects = () => {
     }
   };
 
-  useEffect(() => {
-    if (token) {
-      fetchProjects();
-    }
-  }, [token]);
-
-  const fetchProject = async (projectId: string) => {
+  const addSensor = async (projectId: string, sensorData: { sensorName: string }) => {
     try {
-      const response = await fetch(`http://localhost:3000/project/${projectId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const response = await fetch(`http://localhost:3000/add-sensor/${projectId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(sensorData),
       });
-
       const data = await response.json();
-
       if (data.success) {
-        return data.data.project;
+        toast({ title: "Success", description: data.message });
+        return data.data.sensor;
       } else {
-        throw new Error(data.message || 'Failed to fetch project');
+        throw new Error(data.message || 'Failed to add sensor');
       }
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to fetch project",
+        description: error instanceof Error ? error.message : "Failed to add sensor",
         variant: "destructive",
       });
       return null;
     }
   };
+
+  const updateSensor = async (sensorId: string, sensorData: { title: string; typeOfPin: string; pinNumber: string }) => {
+    try {
+      const response = await fetch(`http://localhost:3000/update-sensor/${sensorId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(sensorData),
+      });
+      const data = await response.json();
+      if (data.success) {
+        toast({ title: "Success", description: data.message });
+      } else {
+        throw new Error(data.message || 'Failed to update sensor');
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update sensor",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const deleteSensor = async (sensorId: string) => {
+    try {
+      const response = await fetch(`http://localhost:3000/sensor/${sensorId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await response.json();
+      if (data.success) {
+        toast({ title: "Success", description: data.message });
+      } else {
+        throw new Error(data.message || 'Failed to delete sensor');
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to delete sensor",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const updateGraphInfo = async (sensorId: string, graphData: Partial<GraphInfo>) => {
+    try {
+      const response = await fetch(`http://localhost:3000/update-graph-info/${sensorId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(graphData),
+      });
+      const data = await response.json();
+      if (data.success) {
+        toast({ title: "Success", description: "Graph info updated successfully!" });
+      } else {
+        throw new Error(data.message || 'Failed to update graph info');
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update graph info",
+        variant: "destructive",
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (token) {
+      fetchProjects();
+    }
+  }, [token]);
 
   return {
     projects,
@@ -209,6 +268,10 @@ export const useProjects = () => {
     updateProject,
     deleteProject,
     fetchProject,
+    addSensor,
+    updateSensor,
+    deleteSensor,
+    updateGraphInfo,
     refetch: fetchProjects,
   };
 };
