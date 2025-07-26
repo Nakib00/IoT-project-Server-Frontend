@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
+const API_URL = import.meta.env.VITE_API_BASE_URL;
 
 interface User {
   userId: string;
@@ -52,7 +53,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setLoading(true);
       
-      const response = await fetch('http://localhost:3000/login', {
+      const response =  await fetch(`${API_URL}/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -95,8 +96,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const register = async (name: string, email: string, phone: string, password: string): Promise<boolean> => {
     try {
       setLoading(true);
-      
-      const response = await fetch('http://localhost:3000/register', {
+
+      const response = await fetch(`${API_URL}/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

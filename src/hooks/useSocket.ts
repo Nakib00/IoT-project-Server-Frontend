@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuth } from '@/contexts/AuthContext';
 import { SensorData } from './useProjects';
+const WEBSOCKET_URL = import.meta.env.VITE_WEBSOCKET_URL;
 
 export const useSocket = () => {
   const [connected, setConnected] = useState(false);
@@ -12,7 +13,7 @@ export const useSocket = () => {
   useEffect(() => {
     if (!token) return;
 
-    socketRef.current = io('http://localhost:3001', {
+  socketRef.current = io(WEBSOCKET_URL, {
       auth: {
         token,
       },

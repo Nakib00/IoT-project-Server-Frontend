@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+const API_URL = import.meta.env.VITE_API_BASE_URL;
 
 export interface SensorData {
   datetime: string;
@@ -51,7 +52,7 @@ export const useProjects = () => {
       const userData = localStorage.getItem('iot_user');
       if (!userData) return;
       const user = JSON.parse(userData);
-      const response = await fetch(`http://localhost:3000/projects/${user.userId}`, {
+      const response = await fetch(`${API_URL}/projects/${user.userId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await response.json();
@@ -73,7 +74,7 @@ export const useProjects = () => {
 
   const fetchProject = async (projectId: string) => {
     try {
-      const response = await fetch(`http://localhost:3000/project/${projectId}`, {
+      const response = await fetch(`${API_URL}/project/${projectId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await response.json();
@@ -97,7 +98,7 @@ export const useProjects = () => {
       const userData = localStorage.getItem('iot_user');
       if (!userData) throw new Error('User not found');
       const user = JSON.parse(userData);
-      const response = await fetch(`http://localhost:3000/create-project/${user.userId}`, {
+      const response = await fetch(`${API_URL}/create-project/${user.userId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(projectData),
@@ -122,7 +123,7 @@ export const useProjects = () => {
 
   const updateProject = async (projectId: string, projectData: { projectName?: string; description?: string; developmentBoard?: string }) => {
     try {
-      const response = await fetch(`http://localhost:3000/update-project/${projectId}`, {
+      const response = await fetch(`${API_URL}/update-project/${projectId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(projectData),
@@ -146,7 +147,7 @@ export const useProjects = () => {
 
   const deleteProject = async (projectId: string) => {
     try {
-      const response = await fetch(`http://localhost:3000/project/${projectId}`, {
+      const response = await fetch(`${API_URL}/project/${projectId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -168,7 +169,7 @@ export const useProjects = () => {
 
   const addSensor = async (projectId: string, sensorData: { sensorName: string }) => {
     try {
-      const response = await fetch(`http://localhost:3000/add-sensor/${projectId}`, {
+      const response = await fetch(`${API_URL}/add-sensor/${projectId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(sensorData),
@@ -192,7 +193,7 @@ export const useProjects = () => {
 
   const updateSensor = async (sensorId: string, sensorData: { title: string; typeOfPin: string; pinNumber: string }) => {
     try {
-      const response = await fetch(`http://localhost:3000/update-sensor/${sensorId}`, {
+      const response = await fetch(`${API_URL}/update-sensor/${sensorId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(sensorData),
@@ -214,7 +215,7 @@ export const useProjects = () => {
 
   const deleteSensor = async (sensorId: string) => {
     try {
-      const response = await fetch(`http://localhost:3000/sensor/${sensorId}`, {
+      const response = await fetch(`${API_URL}/sensor/${sensorId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -235,7 +236,7 @@ export const useProjects = () => {
 
   const updateGraphInfo = async (sensorId: string, graphData: Partial<GraphInfo>) => {
     try {
-      const response = await fetch(`http://localhost:3000/update-graph-info/${sensorId}`, {
+      const response = await fetch(`${API_URL}/update-graph-info/${sensorId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(graphData),
