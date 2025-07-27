@@ -11,18 +11,18 @@ interface AddSignalFormProps {
     onSuccess: () => void;
 }
 
-type ButtonState = Omit<NewButtonPayload, 'sensitivity'> & {
+type ButtonState = Omit<NewButtonPayload, 'sensitivity' | 'sendingdata'> & {
     sensitivity: number | string;
+    sendingdata: [string, string];
 };
-
 
 const initialButtonState: ButtonState = {
     title: '',
     type: 'momentary',
     pinnumber: '',
     action: 'trigger',
-    sendingdata: '',
-    releaseddata: '',
+    sendingdata: ['1', '0'],
+    releaseddata: '0',
     char: '',
     ondata: '',
     offdata: '',
@@ -54,7 +54,7 @@ export const AddSignalForm: React.FC<AddSignalFormProps> = ({ projectId, onSucce
             if (value === 'touch') {
                 button.action = 'touch-toggle';
             } else if (button.action === 'touch-toggle') {
-                button.action = '';
+                button.action = 'trigger';
             }
         }
         setButtons(newButtons);
@@ -62,7 +62,6 @@ export const AddSignalForm: React.FC<AddSignalFormProps> = ({ projectId, onSucce
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
         setIsLoading(true);
 
         const formattedButtons = buttons.map(button => {
@@ -71,11 +70,12 @@ export const AddSignalForm: React.FC<AddSignalFormProps> = ({ projectId, onSucce
                 pinnumber: button.pinnumber,
                 type: button.type,
             };
+
             if (button.type === 'momentary') {
                 return {
                     ...common,
                     sendingdata: button.sendingdata,
-                    releaseddata: button.releaseddata,
+                    releaseddata: "0",
                     char: button.char,
                     action: button.action,
                 };
@@ -95,6 +95,7 @@ export const AddSignalForm: React.FC<AddSignalFormProps> = ({ projectId, onSucce
                     ...common,
                     sensitivity: Number(button.sensitivity),
                     sendingdata: button.sendingdata,
+                    releaseddata: "0",
                     action: 'touch-toggle',
                 };
             }
@@ -140,7 +141,7 @@ export const AddSignalForm: React.FC<AddSignalFormProps> = ({ projectId, onSucce
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor={`button-title-${index}`}>Button Title</Label>
-                            <Input id={`button-title-${index}`} value={button.title} onChange={(e) => handleButtonChange(index, 'title', e.target.value)} required />
+                            <Input id={`button-title-${index}`} placeholder="e.g., Push Button" value={button.title} onChange={(e) => handleButtonChange(index, 'title', e.target.value)} required />
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor={`button-type-${index}`}>Button Type</Label>
@@ -160,10 +161,12 @@ export const AddSignalForm: React.FC<AddSignalFormProps> = ({ projectId, onSucce
                     {button.type === 'momentary' && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <Input placeholder="Pin Number" value={button.pinnumber} onChange={(e) => handleButtonChange(index, 'pinnumber', e.target.value)} required />
-                            <Input placeholder="Sending Data" value={button.sendingdata} onChange={(e) => handleButtonChange(index, 'sendingdata', e.target.value)} required />
-                            <Input placeholder="Released Data" value={button.releaseddata} onChange={(e) => handleButtonChange(index, 'releaseddata', e.target.value)} required />
-                            <Input placeholder="Char" value={button.char} onChange={(e) => handleButtonChange(index, 'char', e.target.value)} required />
-                            <Input placeholder="Action" value={button.action} onChange={(e) => handleButtonChange(index, 'action', e.target.value)} required />
+                            <Input placeholder="Sending Data 1 (On)" value={button.sendingdata[0]} onChange={(e) => handleButtonChange(index, 'sendingdata', [e.target.value, button.sendingdata[1]])} required />
+                            <Input placeholder="Sending Data 2 (Off)" value={button.sendingdata[1]} onChange={(e) => handleButtonChange(index, 'sendingdata', [button.sendingdata[0], e.target.value])} required />
+                            <Input placeholder="Char" value={button.char} onChange={(e) => handleButtonChange(index, 'char', e.target.value)} />
+                            <div className="md:col-span-2">
+                                <Input placeholder="Action" value={button.action} onChange={(e) => handleButtonChange(index, 'action', e.target.value)} required />
+                            </div>
                         </div>
                     )}
 
@@ -172,7 +175,7 @@ export const AddSignalForm: React.FC<AddSignalFormProps> = ({ projectId, onSucce
                             <Input placeholder="Pin Number" value={button.pinnumber} onChange={(e) => handleButtonChange(index, 'pinnumber', e.target.value)} required />
                             <Input placeholder="On Data" value={button.ondata} onChange={(e) => handleButtonChange(index, 'ondata', e.target.value)} required />
                             <Input placeholder="Off Data" value={button.offdata} onChange={(e) => handleButtonChange(index, 'offdata', e.target.value)} required />
-                            <Input placeholder="Char" value={button.char} onChange={(e) => handleButtonChange(index, 'char', e.target.value)} required />
+                            <Input placeholder="Char" value={button.char} onChange={(e) => handleButtonChange(index, 'char', e.target.value)} />
                             <Select value={button.defaultState} onValueChange={(value) => handleButtonChange(index, 'defaultState', value)}>
                                 <SelectTrigger><SelectValue placeholder="Default State" /></SelectTrigger>
                                 <SelectContent>
@@ -185,10 +188,11 @@ export const AddSignalForm: React.FC<AddSignalFormProps> = ({ projectId, onSucce
                     )}
 
                     {button.type === 'touch' && (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <Input placeholder="Pin Number" value={button.pinnumber} onChange={(e) => handleButtonChange(index, 'pinnumber', e.target.value)} required />
                             <Input type="number" placeholder="Sensitivity" value={button.sensitivity} onChange={(e) => handleButtonChange(index, 'sensitivity', e.target.value)} required />
-                            <Input placeholder="Sending Data" value={button.sendingdata} onChange={(e) => handleButtonChange(index, 'sendingdata', e.target.value)} required />
+                            <Input placeholder="Sending Data 1 (On)" value={button.sendingdata[0]} onChange={(e) => handleButtonChange(index, 'sendingdata', [e.target.value, button.sendingdata[1]])} required />
+                            <Input placeholder="Sending Data 2 (Off)" value={button.sendingdata[1]} onChange={(e) => handleButtonChange(index, 'sendingdata', [button.sendingdata[0], e.target.value])} required />
                         </div>
                     )}
                 </div>

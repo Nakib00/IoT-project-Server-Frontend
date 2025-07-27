@@ -34,7 +34,7 @@ export interface Button {
     pinnumber: string;
     action: string;
     // Momentary
-    sendingdata?: string;
+    sendingdata?: string[];
     releaseddata?: string;
     char?: string;
     // Toggle

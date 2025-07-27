@@ -16,8 +16,8 @@ export const EditButtonForm: React.FC<EditButtonFormProps> = ({ button, onSucces
         type: button.type,
         pinnumber: button.pinnumber,
         action: button.action,
-        sendingdata: button.sendingdata || '',
-        releaseddata: button.releaseddata || '',
+        sendingdata: Array.isArray(button.sendingdata) ? button.sendingdata : [button.sendingdata || '1', '0'],
+        releaseddata: button.releaseddata || '0',
         char: button.char || '',
         ondata: button.ondata || '',
         offdata: button.offdata || '',
@@ -33,8 +33,8 @@ export const EditButtonForm: React.FC<EditButtonFormProps> = ({ button, onSucces
             type: button.type,
             pinnumber: button.pinnumber,
             action: button.action,
-            sendingdata: button.sendingdata || '',
-            releaseddata: button.releaseddata || '',
+            sendingdata: Array.isArray(button.sendingdata) ? button.sendingdata : [button.sendingdata || '1', '0'],
+            releaseddata: button.releaseddata || '0',
             char: button.char || '',
             ondata: button.ondata || '',
             offdata: button.offdata || '',
@@ -68,7 +68,6 @@ export const EditButtonForm: React.FC<EditButtonFormProps> = ({ button, onSucces
 
         if (formData.type === 'momentary') {
             payload.sendingdata = formData.sendingdata;
-            payload.releaseddata = formData.releaseddata;
             payload.char = formData.char;
         } else if (formData.type === 'toggle') {
             payload.ondata = formData.ondata;
@@ -114,8 +113,8 @@ export const EditButtonForm: React.FC<EditButtonFormProps> = ({ button, onSucces
             {formData.type === 'momentary' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Input placeholder="Pin Number" value={formData.pinnumber} onChange={(e) => handleChange('pinnumber', e.target.value)} required />
-                    <Input placeholder="Sending Data" value={formData.sendingdata} onChange={(e) => handleChange('sendingdata', e.target.value)} required />
-                    <Input placeholder="Released Data" value={formData.releaseddata} onChange={(e) => handleChange('releaseddata', e.target.value)} />
+                    <Input placeholder="On Data" value={formData.sendingdata[0]} onChange={(e) => handleChange('sendingdata', [e.target.value, formData.sendingdata[1]])} required />
+                    <Input placeholder="Off Data" value={formData.sendingdata[1]} onChange={(e) => handleChange('sendingdata', [formData.sendingdata[0], e.target.value])} required />
                     <Input placeholder="Char" value={formData.char} onChange={(e) => handleChange('char', e.target.value)} />
                     <Input placeholder="Action" value={formData.action} onChange={(e) => handleChange('action', e.target.value)} required />
                 </div>
@@ -142,7 +141,10 @@ export const EditButtonForm: React.FC<EditButtonFormProps> = ({ button, onSucces
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <Input placeholder="Pin Number" value={formData.pinnumber} onChange={(e) => handleChange('pinnumber', e.target.value)} required />
                     <Input type="number" placeholder="Sensitivity" value={formData.sensitivity} onChange={(e) => handleChange('sensitivity', e.target.value)} required />
-                    <Input placeholder="Sending Data" value={formData.sendingdata} onChange={(e) => handleChange('sendingdata', e.target.value)} required />
+                    <div className="grid grid-cols-2 gap-4">
+                        <Input placeholder="On Data" value={formData.sendingdata[0]} onChange={(e) => handleChange('sendingdata', [e.target.value, formData.sendingdata[1]])} required />
+                        <Input placeholder="Off Data" value={formData.sendingdata[1]} onChange={(e) => handleChange('sendingdata', [formData.sendingdata[0], e.target.value])} required />
+                    </div>
                 </div>
             )}
 

@@ -15,8 +15,8 @@ const initialButtonState: NewButtonPayload = {
     type: 'momentary',
     pinnumber: '',
     action: 'trigger',
-    sendingdata: '',
-    releaseddata: '',
+    sendingdata: ['1', '0'],
+    releaseddata: '0',
     char: '',
     ondata: '',
     offdata: '',
@@ -57,7 +57,7 @@ export const AddButtonForm: React.FC<AddButtonFormProps> = ({ signalId, onSucces
 
         if (button.type === 'momentary') {
             payload.sendingdata = button.sendingdata;
-            payload.releaseddata = button.releaseddata;
+            payload.releaseddata = '0';
             payload.char = button.char;
         } else if (button.type === 'toggle') {
             payload.ondata = button.ondata;
@@ -67,6 +67,7 @@ export const AddButtonForm: React.FC<AddButtonFormProps> = ({ signalId, onSucces
         } else if (button.type === 'touch') {
             payload.sensitivity = Number(button.sensitivity);
             payload.sendingdata = button.sendingdata;
+            payload.releaseddata = '0';
             payload.action = 'touch-toggle';
         }
 
@@ -103,8 +104,8 @@ export const AddButtonForm: React.FC<AddButtonFormProps> = ({ signalId, onSucces
             {button.type === 'momentary' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Input placeholder="Pin Number" value={button.pinnumber} onChange={(e) => handleChange('pinnumber', e.target.value)} required />
-                    <Input placeholder="Sending Data" value={button.sendingdata} onChange={(e) => handleChange('sendingdata', e.target.value)} required />
-                    <Input placeholder="Released Data" value={button.releaseddata} onChange={(e) => handleChange('releaseddata', e.target.value)} />
+                    <Input placeholder="On Data" value={button.sendingdata[0]} onChange={(e) => handleChange('sendingdata', [e.target.value, button.sendingdata[1]])} required />
+                    <Input placeholder="Off Data" value={button.sendingdata[1]} onChange={(e) => handleChange('sendingdata', [button.sendingdata[0], e.target.value])} required />
                     <Input placeholder="Char" value={button.char} onChange={(e) => handleChange('char', e.target.value)} />
                     <Input placeholder="Action" value={button.action} onChange={(e) => handleChange('action', e.target.value)} required />
                 </div>
@@ -131,7 +132,10 @@ export const AddButtonForm: React.FC<AddButtonFormProps> = ({ signalId, onSucces
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <Input placeholder="Pin Number" value={button.pinnumber} onChange={(e) => handleChange('pinnumber', e.target.value)} required />
                     <Input type="number" placeholder="Sensitivity" value={button.sensitivity} onChange={(e) => handleChange('sensitivity', e.target.value)} required />
-                    <Input placeholder="Sending Data" value={button.sendingdata} onChange={(e) => handleChange('sendingdata', e.target.value)} required />
+                     <div className="grid grid-cols-2 gap-4">
+                        <Input placeholder="On Data" value={button.sendingdata[0]} onChange={(e) => handleChange('sendingdata', [e.target.value, button.sendingdata[1]])} required />
+                        <Input placeholder="Off Data" value={button.sendingdata[1]} onChange={(e) => handleChange('sendingdata', [button.sendingdata[0], e.target.value])} required />
+                    </div>
                 </div>
             )}
 

@@ -22,6 +22,7 @@ import { AddButtonForm } from '@/components/AddButtonForm';
 import { EditButtonForm } from '@/components/EditButtonForm';
 import { useToast } from '@/hooks/use-toast';
 import { SensorCard } from '@/components/SensorCard';
+import { SignalButton } from '@/components/SignalButton';
 
 const ProjectView = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -75,7 +76,7 @@ const ProjectView = () => {
       });
     }
   };
-
+  
   const handleAddSensorSuccess = () => {
     setShowAddSensorDialog(false);
     loadProject();
@@ -156,8 +157,8 @@ const ProjectView = () => {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center space-x-4">
-          <Button
-            variant="outline"
+          <Button 
+            variant="outline" 
             onClick={() => navigate('/dashboard')}
             className="flex items-center space-x-2"
           >
@@ -169,7 +170,7 @@ const ProjectView = () => {
             <p className="text-muted-foreground">Project Details</p>
           </div>
         </div>
-
+        
         <div className="flex items-center space-x-2">
           <Button variant="outline" onClick={handleEdit}>
             <Edit className="h-4 w-4 mr-2" />
@@ -198,7 +199,7 @@ const ProjectView = () => {
                 <h3 className="font-semibold text-foreground mb-2">Description</h3>
                 <p className="text-muted-foreground">{project.description}</p>
               </div>
-
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <h4 className="font-medium text-foreground mb-1">Development Board</h4>
@@ -207,7 +208,7 @@ const ProjectView = () => {
                     {project.developmentBoard}
                   </Badge>
                 </div>
-
+                
                 <div>
                   <h4 className="font-medium text-foreground mb-1">Total Sensors</h4>
                   <Badge variant={project.totalsensor > 0 ? "default" : "outline"}>
@@ -232,7 +233,7 @@ const ProjectView = () => {
                   {project.totalsensor > 0 ? "Active" : "Setup Required"}
                 </Badge>
               </div>
-
+              
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Project Token</span>
                 <div className="flex items-center gap-2">
@@ -264,7 +265,7 @@ const ProjectView = () => {
                   }
                 </p>
               </div>
-
+              
               <div>
                 <p className="text-sm font-medium text-foreground">Last Updated</p>
                 <p className="text-sm text-muted-foreground">
@@ -359,12 +360,8 @@ const ProjectView = () => {
                     <CardContent>
                       {signal.button.map((button) => (
                         <div key={button.id} className="flex justify-between items-center p-2 border-b">
-                          <div>
-                            <p className="font-semibold">{button.title}</p>
-                            <p className="text-sm text-muted-foreground">Pin: {button.pinnumber}</p>
-                          </div>
+                          <SignalButton button={button} />
                           <div className="flex items-center space-x-2">
-                            <Badge variant="secondary">{button.sendingdata}</Badge>
                             <Button variant="ghost" size="icon" onClick={() => handleEditButton(button)}>
                               <Edit className="h-4 w-4" />
                             </Button>
@@ -416,7 +413,7 @@ const ProjectView = () => {
           </DialogContent>
         </Dialog>
       )}
-
+      
       {/* Add Button Dialog */}
       {addingButtonToSignal && (
         <Dialog open={!!addingButtonToSignal} onOpenChange={() => setAddingButtonToSignal(null)}>
