@@ -65,8 +65,6 @@ export interface Project {
   sendingsignal?: SendingSignal[];
 }
 
-
-// Payload for creating/updating a single button
 export interface NewSignalButtonPayload {
   title: string;
   type: 'momentary' | 'toggle' | 'touch';
@@ -75,7 +73,6 @@ export interface NewSignalButtonPayload {
   releaseddata: string;
 }
 
-// Payload for creating a new signal section with multiple buttons
 export interface NewSignalPayload {
   title: string;
   buttons: NewSignalButtonPayload[];
@@ -409,6 +406,27 @@ export const useProjects = () => {
       });
     }
   };
+  
+  // NEW: Function to update the releaseddata
+  const updateButtonReleasedData = async (buttonId: string, releaseddata: string) => {
+    try {
+      const response = await fetch(`${API_URL}/button/${buttonId}/releaseddata`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ releaseddata }),
+      });
+      const data = await response.json();
+      if (!data.success) {
+         throw new Error(data.message || 'Failed to update button state');
+      }
+    } catch (error) {
+       toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update button state",
+        variant: "destructive",
+      });
+    }
+  };
 
   const deleteButton = async (buttonId: string) => {
     try {
@@ -453,6 +471,7 @@ export const useProjects = () => {
     deleteSignal,
     addButtonToSignal,
     updateButton,
+    updateButtonReleasedData,
     deleteButton,
     refetch: fetchProjects,
   };
