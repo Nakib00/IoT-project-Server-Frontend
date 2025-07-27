@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
-import { DashboardHeader } from '@/components/DashboardHeader';
+import { Navbar } from '@/components/Navbar';
+import { Footer } from '@/components/Footer';
 
 interface LayoutProps {
   children: ReactNode;
@@ -7,16 +8,12 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
-    <div className="min-h-screen bg-background">
-      <DashboardHeader />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-background flex flex-col">
+      <Navbar />
+      <main className="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
         {children}
       </main>
-      <footer className="border-t">
-        <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-muted-foreground">
-          &copy; {new Date().getFullYear()} Zantech. All Rights Reserved.
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

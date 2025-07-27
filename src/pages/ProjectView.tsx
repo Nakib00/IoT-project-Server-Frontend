@@ -338,44 +338,46 @@ const ProjectView = () => {
           </Dialog>
         </div>
         {project.sendingsignal && project.sendingsignal.length > 0 ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {project.sendingsignal.map((sendingSignal, index) => (
-              <div key={index}>
-                {sendingSignal.signal.map((signal) => (
-                  <Card key={signal.id} className="mb-4">
-                    <CardHeader className="flex flex-row items-center justify-between">
-                      <CardTitle>{signal.title}</CardTitle>
-                      <div className="flex items-center space-x-2">
-                        <Button variant="ghost" size="icon" onClick={() => handleEditSignal(signal)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDeleteSignal(signal.id)}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleAddButton(signal.id)}>
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
+          <div className="space-y-6">
+            {project.sendingsignal.map((sendingSignal) =>
+              sendingSignal.signal.map((signal) => (
+                <Card key={signal.id}>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle>{signal.title}</CardTitle>
+                    <div className="flex items-center space-x-2">
+                      <Button variant="ghost" size="icon" onClick={() => handleEditSignal(signal)}>
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => handleDeleteSignal(signal.id)}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => handleAddButton(signal.id)}>
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {signal.button.map((button) => (
-                        <div key={button.id} className="flex justify-between items-center p-2 border-b">
-                          <SignalButton button={button} />
-                          <div className="flex items-center space-x-2">
-                            <Button variant="ghost" size="icon" onClick={() => handleEditButton(button)}>
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => handleDeleteButton(button.id)}>
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
+                        <div key={button.id} className="rounded-lg border bg-background p-3 flex flex-col justify-between gap-4">
+                          <div className="flex-grow">
+                              <SignalButton button={button} />
+                          </div>
+                          <div className="flex items-center justify-end space-x-1">
+                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEditButton(button)}>
+                                  <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDeleteButton(button.id)}>
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
                           </div>
                         </div>
                       ))}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </div>
         ) : (
           <div className="text-center py-12 border rounded-lg">
