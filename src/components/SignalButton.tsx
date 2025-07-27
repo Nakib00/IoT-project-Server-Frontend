@@ -13,68 +13,75 @@ interface SignalButtonProps {
 export const SignalButton: React.FC<SignalButtonProps> = ({ button }) => {
     const { sendButtonData, updateButtonReleasedData } = useProjects();
     
-    // State to track the current value of the button
-    const [currentValue, setCurrentValue] = useState(button.releaseddata);
+    // State for the toggle switch's on/off status, initialized from the database
+    const [isToggleOn, setIsToggleOn] = useState(button.releaseddata === '1');
+    // State for visual feedback on momentary/touch buttons
+    const [isPressed, setIsPressed] = useState(false);
 
-    // Effect to update the local state if the prop changes (e.g., after a project reload)
+    // Ensure local UI state is updated if the prop changes from a parent re-render
     useEffect(() => {
-        setCurrentValue(button.releaseddata);
+        setIsToggleOn(button.releaseddata === '1');
     }, [button.releaseddata]);
 
+    // --- Event Handlers for Momentary (Push) & Touch Buttons ---
     const handlePress = () => {
-        if (!button.sendingdata || button.sendingdata.length < 2) return;
-
-        // Determine the next value to send by toggling
-        const nextValue = currentValue === button.sendingdata[0] 
-            ? button.sendingdata[1] 
-            : button.sendingdata[0];
-        
-        // 1. Send the new value via WebSocket
-        sendButtonData(button.pinnumber, nextValue);
-        
-        // 2. Update the state on the server
-        updateButtonReleasedData(button.id, nextValue);
-
-        // 3. Update the local state
-        setCurrentValue(nextValue);
-    };
-
-    const handleToggle = (isChecked: boolean) => {
-        const valueToSend = isChecked ? "1" : "0";
+        setIsPressed(true);
+        const valueToSend = button.sendingdata?.[0] || '1'; // "On" value
         sendButtonData(button.pinnumber, valueToSend);
         updateButtonReleasedData(button.id, valueToSend);
-        setCurrentValue(valueToSend);
     };
 
+    const handleRelease = () => {
+        setIsPressed(false);
+        const valueToSend = button.sendingdata?.[1] || '0'; // "Off" value
+        sendButtonData(button.pinnumber, valueToSend);
+        updateButtonReleasedData(button.id, valueToSend);
+    };
+
+    // --- Event Handler for Toggle Switch ---
+    const handleToggle = (isChecked: boolean) => {
+        const valueToSend = isChecked ? "1" : "0";
+        setIsToggleOn(isChecked); // Update UI state immediately
+        sendButtonData(button.pinnumber, valueToSend);
+        updateButtonReleasedData(button.id, valueToSend);
+    };
+
+    // --- UI Styles for a more realistic button look ---
+    const buttonBaseClasses = "w-full justify-center text-base md:text-sm font-semibold h-12 shadow-lg border-b-4 rounded-lg transition-all duration-150 ease-in-out";
+    const buttonPressedClasses = "translate-y-0.5 border-b-2";
+    const buttonDefaultClasses = "bg-slate-200 border-slate-400 text-slate-600 hover:bg-slate-300 dark:bg-slate-700 dark:border-slate-900 dark:text-slate-200 dark:hover:bg-slate-600";
+    
     switch (button.type) {
         case 'momentary':
         case 'touch':
-            // Both momentary and touch now use the same toggle logic on press
-            const isPressed = currentValue === (button.sendingdata?.[0] || '1');
             return (
                 <Button
-                    onClick={handlePress}
+                    onMouseDown={handlePress}
+                    onMouseUp={handleRelease}
+                    onMouseLeave={handleRelease} // Handle case where mouse leaves while pressed
+                    onTouchStart={handlePress}
+                    onTouchEnd={handleRelease}
                     className={cn(
-                        "w-full justify-start text-base md:text-sm",
-                        isPressed && "bg-accent text-accent-foreground"
+                        buttonBaseClasses,
+                        buttonDefaultClasses,
+                        isPressed && buttonPressedClasses
                     )}
                 >
-                    {button.type === 'momentary' ? <Zap className="h-4 w-4 mr-2" /> : <Touchpad className="h-4 w-4 mr-2" />}
+                    {button.type === 'momentary' ? <Zap className="h-5 w-5 mr-2" /> : <Touchpad className="h-5 w-5 mr-2" />}
                     {button.title}
                 </Button>
             );
         case 'toggle':
-            const isToggleOn = currentValue === "1";
             return (
-                <div className="flex items-center justify-between w-full h-10 px-3">
-                    <div className="flex items-center space-x-2">
-                        <ToggleLeft className="h-4 w-4" />
-                        <label className="font-medium text-base md:text-sm">{button.title}</label>
+                <div className="flex items-center justify-between w-full h-12 px-4 bg-slate-200 dark:bg-slate-700 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                        <ToggleLeft className="h-5 w-5 text-slate-600 dark:text-slate-300" />
+                        <label className="font-semibold text-base md:text-sm text-slate-700 dark:text-slate-200">{button.title}</label>
                     </div>
                     <Switch checked={isToggleOn} onCheckedChange={handleToggle} />
                 </div>
             );
         default:
-            return <Button disabled>{button.title}</Button>;
+            return <Button disabled className={buttonBaseClasses}>{button.title}</Button>;
     }
 };
