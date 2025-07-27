@@ -27,6 +27,34 @@ export interface Sensor {
   data: SensorData[];
 }
 
+export interface Button {
+    id: string;
+    title: string;
+    type: 'momentary' | 'toggle' | 'touch';
+    pinnumber: string;
+    action: string;
+    // Momentary
+    sendingdata?: string;
+    releaseddata?: string;
+    char?: string;
+    // Toggle
+    ondata?: string;
+    offdata?: string;
+    defaultState?: 'on' | 'off';
+    // Touch
+    sensitivity?: number;
+}
+
+export interface Signal {
+    id: string;
+    title: string;
+    button: Button[];
+}
+
+export interface SendingSignal {
+    signal: Signal[];
+}
+
 export interface Project {
   projectId: string;
   projectName: string;
@@ -35,9 +63,13 @@ export interface Project {
   createdAt: string;
   updatedAt: string;
   totalsensor: number;
-  token: string; 
+  token: string;
   sensordata?: Sensor[];
+  sendingsignal?: SendingSignal[];
 }
+
+export type NewButtonPayload = Omit<Button, 'id'>;
+
 
 export const useProjects = () => {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -255,6 +287,138 @@ export const useProjects = () => {
       });
     }
   };
+  
+  const createSendingSignal = async (projectId: string, signalData: { title: string; buttons: NewButtonPayload[] }) => {
+    try {
+      const response = await fetch(`${API_URL}/create-sendingsignal/${projectId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(signalData),
+      });
+      const data = await response.json();
+      if (data.success) {
+        toast({ title: "Success", description: data.message });
+        return data.data;
+      } else {
+        throw new Error(data.message || 'Failed to create sending signal');
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to create sending signal",
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
+
+  const updateSignalTitle = async (signalId: string, title: string) => {
+    try {
+      const response = await fetch(`${API_URL}/update-signal/${signalId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ title }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        toast({ title: "Success", description: data.message });
+      } else {
+        throw new Error(data.message || 'Failed to update signal title');
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update signal title",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const deleteSignal = async (signalId: string) => {
+    try {
+      const response = await fetch(`${API_URL}/delete-signal/${signalId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await response.json();
+      if (data.success) {
+        toast({ title: "Success", description: data.message });
+      } else {
+        throw new Error(data.message || 'Failed to delete signal');
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to delete signal",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const addButtonToSignal = async (signalId: string, buttonData: NewButtonPayload) => {
+    try {
+      const response = await fetch(`${API_URL}/signal/${signalId}/add-button`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(buttonData),
+      });
+      const data = await response.json();
+      if (data.success) {
+        toast({ title: "Success", description: data.message });
+      } else {
+        throw new Error(data.message || 'Failed to add button');
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to add button",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const updateButton = async (buttonId: string, buttonData: NewButtonPayload) => {
+    try {
+      const response = await fetch(`${API_URL}/button/${buttonId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(buttonData),
+      });
+      const data = await response.json();
+      if (data.success) {
+        toast({ title: "Success", description: data.message });
+      } else {
+        throw new Error(data.message || 'Failed to update button');
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update button",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const deleteButton = async (buttonId: string) => {
+    try {
+      const response = await fetch(`${API_URL}/button/${buttonId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await response.json();
+      if (data.success) {
+        toast({ title: "Success", description: data.message });
+      } else {
+        throw new Error(data.message || 'Failed to delete button');
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to delete button",
+        variant: "destructive",
+      });
+    }
+  };
 
   useEffect(() => {
     if (token) {
@@ -273,6 +437,12 @@ export const useProjects = () => {
     updateSensor,
     deleteSensor,
     updateGraphInfo,
+    createSendingSignal,
+    updateSignalTitle,
+    deleteSignal,
+    addButtonToSignal,
+    updateButton,
+    deleteButton,
     refetch: fetchProjects,
   };
 };

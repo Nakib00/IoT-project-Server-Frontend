@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useProjects, Project } from '@/hooks/useProjects';
+import { useProjects, Project, Signal, Button as ButtonType } from '@/hooks/useProjects';
 import { ArrowLeft, Edit, Trash2, Calendar, Cpu, FileText, Copy, Plus } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import {
@@ -16,6 +16,10 @@ import {
 } from '@/components/ui/dialog';
 import { EditProjectForm } from '@/components/EditProjectForm';
 import { AddSensorForm } from '@/components/AddSensorForm';
+import { AddSignalForm } from '@/components/AddSignalForm';
+import { EditSignalForm } from '@/components/EditSignalForm';
+import { AddButtonForm } from '@/components/AddButtonForm';
+import { EditButtonForm } from '@/components/EditButtonForm';
 import { useToast } from '@/hooks/use-toast';
 import { SensorCard } from '@/components/SensorCard';
 
@@ -26,7 +30,11 @@ const ProjectView = () => {
   const [loading, setLoading] = useState(true);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showAddSensorDialog, setShowAddSensorDialog] = useState(false);
-  const { fetchProject, deleteProject } = useProjects();
+  const [showAddSignalDialog, setShowAddSignalDialog] = useState(false);
+  const [editingSignal, setEditingSignal] = useState<Signal | null>(null);
+  const [addingButtonToSignal, setAddingButtonToSignal] = useState<string | null>(null);
+  const [editingButton, setEditingButton] = useState<ButtonType | null>(null);
+  const { fetchProject, deleteProject, deleteSignal, deleteButton } = useProjects();
   const { toast } = useToast();
 
   const loadProject = async () => {
@@ -67,10 +75,56 @@ const ProjectView = () => {
       });
     }
   };
-  
+
   const handleAddSensorSuccess = () => {
     setShowAddSensorDialog(false);
     loadProject();
+  };
+
+  const handleAddSignalSuccess = () => {
+    setShowAddSignalDialog(false);
+    loadProject();
+  };
+
+  const handleEditSignal = (signal: Signal) => {
+    setEditingSignal(signal);
+  };
+
+  const handleEditSignalSuccess = () => {
+    setEditingSignal(null);
+    loadProject();
+  };
+
+  const handleDeleteSignal = async (signalId: string) => {
+    if (window.confirm('Are you sure you want to delete this signal section?')) {
+      await deleteSignal(signalId);
+      loadProject();
+    }
+  };
+
+  const handleAddButton = (signalId: string) => {
+    setAddingButtonToSignal(signalId);
+  };
+
+  const handleAddButtonSuccess = () => {
+    setAddingButtonToSignal(null);
+    loadProject();
+  };
+
+  const handleEditButton = (button: ButtonType) => {
+    setEditingButton(button);
+  };
+
+  const handleEditButtonSuccess = () => {
+    setEditingButton(null);
+    loadProject();
+  };
+
+  const handleDeleteButton = async (buttonId: string) => {
+    if (window.confirm('Are you sure you want to delete this button?')) {
+      await deleteButton(buttonId);
+      loadProject();
+    }
   };
 
   if (loading) {
@@ -102,8 +156,8 @@ const ProjectView = () => {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center space-x-4">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => navigate('/dashboard')}
             className="flex items-center space-x-2"
           >
@@ -115,7 +169,7 @@ const ProjectView = () => {
             <p className="text-muted-foreground">Project Details</p>
           </div>
         </div>
-        
+
         <div className="flex items-center space-x-2">
           <Button variant="outline" onClick={handleEdit}>
             <Edit className="h-4 w-4 mr-2" />
@@ -144,7 +198,7 @@ const ProjectView = () => {
                 <h3 className="font-semibold text-foreground mb-2">Description</h3>
                 <p className="text-muted-foreground">{project.description}</p>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <h4 className="font-medium text-foreground mb-1">Development Board</h4>
@@ -153,7 +207,7 @@ const ProjectView = () => {
                     {project.developmentBoard}
                   </Badge>
                 </div>
-                
+
                 <div>
                   <h4 className="font-medium text-foreground mb-1">Total Sensors</h4>
                   <Badge variant={project.totalsensor > 0 ? "default" : "outline"}>
@@ -178,7 +232,7 @@ const ProjectView = () => {
                   {project.totalsensor > 0 ? "Active" : "Setup Required"}
                 </Badge>
               </div>
-              
+
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Project Token</span>
                 <div className="flex items-center gap-2">
@@ -210,7 +264,7 @@ const ProjectView = () => {
                   }
                 </p>
               </div>
-              
+
               <div>
                 <p className="text-sm font-medium text-foreground">Last Updated</p>
                 <p className="text-sm text-muted-foreground">
@@ -260,6 +314,79 @@ const ProjectView = () => {
         )}
       </div>
 
+      {/* Sending Signal Section */}
+      <div className="mt-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-bold">Sending Signal</h2>
+          <Dialog open={showAddSignalDialog} onOpenChange={setShowAddSignalDialog}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Add New Signal
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[600px]">
+              <DialogHeader>
+                <DialogTitle>Add New Signal</DialogTitle>
+                <DialogDescription>
+                  Configure a new signal section with buttons.
+                </DialogDescription>
+              </DialogHeader>
+              <AddSignalForm projectId={project.projectId} onSuccess={handleAddSignalSuccess} />
+            </DialogContent>
+          </Dialog>
+        </div>
+        {project.sendingsignal && project.sendingsignal.length > 0 ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {project.sendingsignal.map((sendingSignal, index) => (
+              <div key={index}>
+                {sendingSignal.signal.map((signal) => (
+                  <Card key={signal.id} className="mb-4">
+                    <CardHeader className="flex flex-row items-center justify-between">
+                      <CardTitle>{signal.title}</CardTitle>
+                      <div className="flex items-center space-x-2">
+                        <Button variant="ghost" size="icon" onClick={() => handleEditSignal(signal)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleDeleteSignal(signal.id)}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleAddButton(signal.id)}>
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      {signal.button.map((button) => (
+                        <div key={button.id} className="flex justify-between items-center p-2 border-b">
+                          <div>
+                            <p className="font-semibold">{button.title}</p>
+                            <p className="text-sm text-muted-foreground">Pin: {button.pinnumber}</p>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Badge variant="secondary">{button.sendingdata}</Badge>
+                            <Button variant="ghost" size="icon" onClick={() => handleEditButton(button)}>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleDeleteButton(button.id)}>
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12 border rounded-lg">
+            <p className="text-muted-foreground">No sending signals configured.</p>
+          </div>
+        )}
+      </div>
+
       {/* Edit Dialog */}
       {project && (
         <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
@@ -271,6 +398,51 @@ const ProjectView = () => {
               </DialogDescription>
             </DialogHeader>
             <EditProjectForm project={project} onSuccess={handleEditSuccess} />
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Edit Signal Dialog */}
+      {editingSignal && (
+        <Dialog open={!!editingSignal} onOpenChange={() => setEditingSignal(null)}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Edit Signal</DialogTitle>
+              <DialogDescription>
+                Update your signal's title.
+              </DialogDescription>
+            </DialogHeader>
+            <EditSignalForm signal={editingSignal} onSuccess={handleEditSignalSuccess} />
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Add Button Dialog */}
+      {addingButtonToSignal && (
+        <Dialog open={!!addingButtonToSignal} onOpenChange={() => setAddingButtonToSignal(null)}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Add New Button</DialogTitle>
+              <DialogDescription>
+                Add a new button to your signal.
+              </DialogDescription>
+            </DialogHeader>
+            <AddButtonForm signalId={addingButtonToSignal} onSuccess={handleAddButtonSuccess} />
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Edit Button Dialog */}
+      {editingButton && (
+        <Dialog open={!!editingButton} onOpenChange={() => setEditingButton(null)}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Edit Button</DialogTitle>
+              <DialogDescription>
+                Update your button's information.
+              </DialogDescription>
+            </DialogHeader>
+            <EditButtonForm button={editingButton} onSuccess={handleEditButtonSuccess} />
           </DialogContent>
         </Dialog>
       )}
