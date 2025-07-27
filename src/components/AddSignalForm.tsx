@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useProjects, NewButtonPayload } from '@/hooks/useProjects';
+import { useProjects } from '@/hooks/useProjects';
 import { PlusCircle, XCircle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -11,28 +11,26 @@ interface AddSignalFormProps {
     onSuccess: () => void;
 }
 
-type ButtonState = Omit<NewButtonPayload, 'sensitivity' | 'sendingdata'> & {
-    sensitivity: number | string;
-    sendingdata: [string, string];
-};
+// Simplified state for the form, matching the new UI fields
+interface ButtonFormState {
+    title: string;
+    type: 'momentary' | 'toggle' | 'touch';
+    pinnumber: string;
+    sendingdata1: string;
+    sendingdata2: string;
+}
 
-const initialButtonState: ButtonState = {
+const initialButtonState: ButtonFormState = {
     title: '',
     type: 'momentary',
     pinnumber: '',
-    action: 'trigger',
-    sendingdata: ['1', '0'],
-    releaseddata: '0',
-    char: '',
-    ondata: '',
-    offdata: '',
-    defaultState: 'off',
-    sensitivity: 40,
+    sendingdata1: '1',
+    sendingdata2: '0',
 };
 
 export const AddSignalForm: React.FC<AddSignalFormProps> = ({ projectId, onSuccess }) => {
-    const [title, setTitle] = useState('');
-    const [buttons, setButtons] = useState<ButtonState[]>([initialButtonState]);
+    const [sectionTitle, setSectionTitle] = useState('');
+    const [buttons, setButtons] = useState<ButtonFormState[]>([initialButtonState]);
     const [isLoading, setIsLoading] = useState(false);
     const { createSendingSignal } = useProjects();
 
@@ -45,18 +43,9 @@ export const AddSignalForm: React.FC<AddSignalFormProps> = ({ projectId, onSucce
         setButtons(newButtons);
     };
 
-    const handleButtonChange = (index: number, field: keyof ButtonState, value: any) => {
+    const handleButtonChange = (index: number, field: keyof ButtonFormState, value: any) => {
         const newButtons = [...buttons];
-        const button = newButtons[index];
-        (button[field] as any) = value;
-
-        if (field === 'type') {
-            if (value === 'touch') {
-                button.action = 'touch-toggle';
-            } else if (button.action === 'touch-toggle') {
-                button.action = 'trigger';
-            }
-        }
+        newButtons[index] = { ...newButtons[index], [field]: value };
         setButtons(newButtons);
     };
 
@@ -64,46 +53,24 @@ export const AddSignalForm: React.FC<AddSignalFormProps> = ({ projectId, onSucce
         e.preventDefault();
         setIsLoading(true);
 
-        const formattedButtons = buttons.map(button => {
-            const common = {
-                title: button.title,
-                pinnumber: button.pinnumber,
-                type: button.type,
-            };
-
-            if (button.type === 'momentary') {
-                return {
-                    ...common,
-                    sendingdata: button.sendingdata,
-                    releaseddata: "0",
-                    char: button.char,
-                    action: button.action,
-                };
-            }
-            if (button.type === 'toggle') {
-                return {
-                    ...common,
-                    ondata: button.ondata,
-                    offdata: button.offdata,
-                    char: button.char,
-                    defaultState: button.defaultState,
-                    action: button.action,
-                };
-            }
-            if (button.type === 'touch') {
-                return {
-                    ...common,
-                    sensitivity: Number(button.sensitivity),
-                    sendingdata: button.sendingdata,
-                    releaseddata: "0",
-                    action: 'touch-toggle',
-                };
-            }
-            return button;
-        });
+        // Format the buttons from the form state to match the required API payload structure
+        const formattedButtonsForApi = buttons.map(button => ({
+            title: button.title,
+            type: button.type,
+            pinnumber: button.pinnumber,
+            sendingdata: [button.sendingdata1, button.sendingdata2],
+            releaseddata: "0", // Default hidden value as requested
+        }));
+        
+        const payload = {
+            title: sectionTitle,
+            buttons: formattedButtonsForApi,
+        };
 
         try {
-            await createSendingSignal(projectId, { title, buttons: formattedButtons as NewButtonPayload[] });
+            // The useProjects hook needs to be updated to handle this new payload structure
+            // Assuming createSendingSignal is adapted for this
+            await createSendingSignal(projectId, payload);
             onSuccess();
         } catch (error) {
             console.error('Failed to create sending signal:', error);
@@ -119,8 +86,8 @@ export const AddSignalForm: React.FC<AddSignalFormProps> = ({ projectId, onSucce
                 <Input
                     id="signal-title"
                     placeholder="e.g., Living Room Controls"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
+                    value={sectionTitle}
+                    onChange={(e) => setSectionTitle(e.target.value)}
                     required
                 />
             </div>
@@ -138,14 +105,22 @@ export const AddSignalForm: React.FC<AddSignalFormProps> = ({ projectId, onSucce
                             <XCircle className="h-4 w-4 text-destructive" />
                         </Button>
                     )}
+                    
+                    <div className="space-y-2">
+                        <Label htmlFor={`button-title-${index}`}>Button Title</Label>
+                        <Input 
+                            id={`button-title-${index}`} 
+                            placeholder="e.g., Push Button" 
+                            value={button.title} 
+                            onChange={(e) => handleButtonChange(index, 'title', e.target.value)} 
+                            required 
+                        />
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor={`button-title-${index}`}>Button Title</Label>
-                            <Input id={`button-title-${index}`} placeholder="e.g., Push Button" value={button.title} onChange={(e) => handleButtonChange(index, 'title', e.target.value)} required />
-                        </div>
-                        <div className="space-y-2">
                             <Label htmlFor={`button-type-${index}`}>Button Type</Label>
-                            <Select value={button.type} onValueChange={(value) => handleButtonChange(index, 'type', value)}>
+                            <Select value={button.type} onValueChange={(value: ButtonFormState['type']) => handleButtonChange(index, 'type', value)}>
                                 <SelectTrigger id={`button-type-${index}`}>
                                     <SelectValue placeholder="Select type" />
                                 </SelectTrigger>
@@ -156,54 +131,49 @@ export const AddSignalForm: React.FC<AddSignalFormProps> = ({ projectId, onSucce
                                 </SelectContent>
                             </Select>
                         </div>
+                        <div className="space-y-2">
+                            <Label htmlFor={`pinnumber-${index}`}>Pin Number</Label>
+                            <Input 
+                                id={`pinnumber-${index}`} 
+                                placeholder="e.g., D1, T0" 
+                                value={button.pinnumber} 
+                                onChange={(e) => handleButtonChange(index, 'pinnumber', e.target.value)} 
+                                required 
+                            />
+                        </div>
                     </div>
 
-                    {button.type === 'momentary' && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <Input placeholder="Pin Number" value={button.pinnumber} onChange={(e) => handleButtonChange(index, 'pinnumber', e.target.value)} required />
-                            <Input placeholder="Sending Data 1 (On)" value={button.sendingdata[0]} onChange={(e) => handleButtonChange(index, 'sendingdata', [e.target.value, button.sendingdata[1]])} required />
-                            <Input placeholder="Sending Data 2 (Off)" value={button.sendingdata[1]} onChange={(e) => handleButtonChange(index, 'sendingdata', [button.sendingdata[0], e.target.value])} required />
-                            <Input placeholder="Char" value={button.char} onChange={(e) => handleButtonChange(index, 'char', e.target.value)} />
-                            <div className="md:col-span-2">
-                                <Input placeholder="Action" value={button.action} onChange={(e) => handleButtonChange(index, 'action', e.target.value)} required />
-                            </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor={`sendingdata1-${index}`}>Sending Data 1</Label>
+                            <Input 
+                                id={`sendingdata1-${index}`} 
+                                placeholder="e.g., 1" 
+                                value={button.sendingdata1} 
+                                onChange={(e) => handleButtonChange(index, 'sendingdata1', e.target.value)} 
+                                required 
+                            />
                         </div>
-                    )}
-
-                    {button.type === 'toggle' && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <Input placeholder="Pin Number" value={button.pinnumber} onChange={(e) => handleButtonChange(index, 'pinnumber', e.target.value)} required />
-                            <Input placeholder="On Data" value={button.ondata} onChange={(e) => handleButtonChange(index, 'ondata', e.target.value)} required />
-                            <Input placeholder="Off Data" value={button.offdata} onChange={(e) => handleButtonChange(index, 'offdata', e.target.value)} required />
-                            <Input placeholder="Char" value={button.char} onChange={(e) => handleButtonChange(index, 'char', e.target.value)} />
-                            <Select value={button.defaultState} onValueChange={(value) => handleButtonChange(index, 'defaultState', value)}>
-                                <SelectTrigger><SelectValue placeholder="Default State" /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="on">On</SelectItem>
-                                    <SelectItem value="off">Off</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <Input placeholder="Action" value={button.action} onChange={(e) => handleButtonChange(index, 'action', e.target.value)} required />
+                        <div className="space-y-2">
+                            <Label htmlFor={`sendingdata2-${index}`}>Sending Data 2</Label>
+                            <Input 
+                                id={`sendingdata2-${index}`} 
+                                placeholder="e.g., 0" 
+                                value={button.sendingdata2} 
+                                onChange={(e) => handleButtonChange(index, 'sendingdata2', e.target.value)} 
+                                required 
+                            />
                         </div>
-                    )}
-
-                    {button.type === 'touch' && (
-                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <Input placeholder="Pin Number" value={button.pinnumber} onChange={(e) => handleButtonChange(index, 'pinnumber', e.target.value)} required />
-                            <Input type="number" placeholder="Sensitivity" value={button.sensitivity} onChange={(e) => handleButtonChange(index, 'sensitivity', e.target.value)} required />
-                            <Input placeholder="Sending Data 1 (On)" value={button.sendingdata[0]} onChange={(e) => handleButtonChange(index, 'sendingdata', [e.target.value, button.sendingdata[1]])} required />
-                            <Input placeholder="Sending Data 2 (Off)" value={button.sendingdata[1]} onChange={(e) => handleButtonChange(index, 'sendingdata', [button.sendingdata[0], e.target.value])} required />
-                        </div>
-                    )}
+                    </div>
                 </div>
             ))}
 
             <Button type="button" variant="outline" onClick={handleAddButton}>
                 <PlusCircle className="h-4 w-4 mr-2" />
-                Add Button to Section
+                Add Another Button
             </Button>
 
-            <div className="flex justify-end space-x-3">
+            <div className="flex justify-end space-x-3 pt-4">
                 <Button type="button" variant="outline" onClick={onSuccess}>
                     Cancel
                 </Button>

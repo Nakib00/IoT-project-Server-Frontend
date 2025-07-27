@@ -33,15 +33,12 @@ export interface Button {
     type: 'momentary' | 'toggle' | 'touch';
     pinnumber: string;
     action: string;
-    // Momentary
     sendingdata?: string[];
     releaseddata?: string;
     char?: string;
-    // Toggle
     ondata?: string;
     offdata?: string;
     defaultState?: 'on' | 'off';
-    // Touch
     sensitivity?: number;
 }
 
@@ -68,7 +65,21 @@ export interface Project {
   sendingsignal?: SendingSignal[];
 }
 
-export type NewButtonPayload = Omit<Button, 'id'>;
+
+// Payload for creating/updating a single button
+export interface NewSignalButtonPayload {
+  title: string;
+  type: 'momentary' | 'toggle' | 'touch';
+  pinnumber: string;
+  sendingdata: string[];
+  releaseddata: string;
+}
+
+// Payload for creating a new signal section with multiple buttons
+export interface NewSignalPayload {
+  title: string;
+  buttons: NewSignalButtonPayload[];
+}
 
 
 export const useProjects = () => {
@@ -288,7 +299,7 @@ export const useProjects = () => {
     }
   };
   
-  const createSendingSignal = async (projectId: string, signalData: { title: string; buttons: NewButtonPayload[] }) => {
+  const createSendingSignal = async (projectId: string, signalData: NewSignalPayload) => {
     try {
       const response = await fetch(`${API_URL}/create-sendingsignal/${projectId}`, {
         method: 'POST',
@@ -355,7 +366,7 @@ export const useProjects = () => {
     }
   };
 
-  const addButtonToSignal = async (signalId: string, buttonData: NewButtonPayload) => {
+  const addButtonToSignal = async (signalId: string, buttonData: NewSignalButtonPayload) => {
     try {
       const response = await fetch(`${API_URL}/signal/${signalId}/add-button`, {
         method: 'POST',
@@ -377,7 +388,7 @@ export const useProjects = () => {
     }
   };
 
-  const updateButton = async (buttonId: string, buttonData: NewButtonPayload) => {
+  const updateButton = async (buttonId: string, buttonData: NewSignalButtonPayload) => {
     try {
       const response = await fetch(`${API_URL}/button/${buttonId}`, {
         method: 'PUT',
