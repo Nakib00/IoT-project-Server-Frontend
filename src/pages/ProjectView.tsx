@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useProjects, Project, Signal, Button as ButtonType } from '@/hooks/useProjects';
-import { ArrowLeft, Edit, Trash2, Calendar, Cpu, FileText, Copy, Plus } from 'lucide-react';
+import { useSocket } from '@/hooks/useSocket';
+import { ArrowLeft, Edit, Trash2, Calendar, Cpu, FileText, Copy, Plus, LineChart } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import {
   Dialog,
@@ -29,6 +30,8 @@ import { EditButtonForm } from '@/components/EditButtonForm';
 import { useToast } from '@/hooks/use-toast';
 import { SensorCard } from '@/components/SensorCard';
 import { SignalSection } from '@/components/SignalSection'; // Import the new component
+import { CombineSensorsForm } from '@/components/CombineSensorsForm';
+import { CombinedSensorGraphCard } from '@/components/CombinedSensorGraphCard';
 
 const ProjectView = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -38,11 +41,13 @@ const ProjectView = () => {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showAddSensorDialog, setShowAddSensorDialog] = useState(false);
   const [showAddSignalDialog, setShowAddSignalDialog] = useState(false);
+  const [showCombineSensorsDialog, setShowCombineSensorsDialog] = useState(false);
   const [editingSignal, setEditingSignal] = useState<Signal | null>(null);
   const [addingButtonToSignal, setAddingButtonToSignal] = useState<string | null>(null);
   const [editingButton, setEditingButton] = useState<ButtonType | null>(null);
   const { fetchProject, deleteProject, deleteSignal, deleteButton } = useProjects();
   const { toast } = useToast();
+  const { joinProject, leaveProject, sensorData } = useSocket();
 
   const loadProject = async () => {
     if (projectId) {
@@ -55,7 +60,30 @@ const ProjectView = () => {
 
   useEffect(() => {
     loadProject();
+    if (projectId) {
+      joinProject(projectId);
+    }
+    return () => {
+      if (projectId) {
+        leaveProject(projectId);
+      }
+    };
   }, [projectId]);
+
+  useEffect(() => {
+    if (sensorData && project) {
+      const updatedSensordata = project.sensordata?.map(sensor => {
+        if (sensor.pinNumber === sensorData.pinNumber) {
+          return {
+            ...sensor,
+            data: [...sensor.data, sensorData],
+          };
+        }
+        return sensor;
+      });
+      setProject({ ...project, sensordata: updatedSensordata });
+    }
+  }, [sensorData]);
 
   const handleEdit = () => {
     setShowEditDialog(true);
@@ -82,7 +110,7 @@ const ProjectView = () => {
       });
     }
   };
-  
+
   const handleAddSensorSuccess = () => {
     setShowAddSensorDialog(false);
     loadProject();
@@ -90,6 +118,11 @@ const ProjectView = () => {
 
   const handleAddSignalSuccess = () => {
     setShowAddSignalDialog(false);
+    loadProject();
+  };
+
+  const handleCombineSensorsSuccess = () => {
+    setShowCombineSensorsDialog(false);
     loadProject();
   };
 
@@ -163,8 +196,8 @@ const ProjectView = () => {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center space-x-4">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => navigate('/dashboard')}
             className="flex items-center space-x-2"
           >
@@ -176,7 +209,7 @@ const ProjectView = () => {
             <p className="text-muted-foreground">Project Details</p>
           </div>
         </div>
-        
+
         <div className="flex items-center space-x-2">
           <Button variant="outline" onClick={handleEdit}>
             <Edit className="h-4 w-4 mr-2" />
@@ -205,7 +238,7 @@ const ProjectView = () => {
                 <h3 className="font-semibold text-foreground mb-2">Description</h3>
                 <p className="text-muted-foreground">{project.description}</p>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <h4 className="font-medium text-foreground mb-1">Development Board</h4>
@@ -214,7 +247,7 @@ const ProjectView = () => {
                     {project.developmentBoard}
                   </Badge>
                 </div>
-                
+
                 <div>
                   <h4 className="font-medium text-foreground mb-1">Total Sensors</h4>
                   <Badge variant={project.totalsensor > 0 ? "default" : "outline"}>
@@ -239,7 +272,7 @@ const ProjectView = () => {
                   {project.totalsensor > 0 ? "Active" : "Setup Required"}
                 </Badge>
               </div>
-              
+
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Project Token</span>
                 <div className="flex items-center gap-2">
@@ -271,7 +304,7 @@ const ProjectView = () => {
                   }
                 </p>
               </div>
-              
+
               <div>
                 <p className="text-sm font-medium text-foreground">Last Updated</p>
                 <p className="text-sm text-muted-foreground">
@@ -304,6 +337,10 @@ const ProjectView = () => {
               <DropdownMenuItem onClick={() => setShowAddSignalDialog(true)}>
                 Add New Signal
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShowCombineSensorsDialog(true)}>
+                <LineChart className="h-4 w-4 mr-2" />
+                Combine Sensors
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -319,6 +356,18 @@ const ProjectView = () => {
           </div>
         )}
       </div>
+
+      {/* Combined Sensor Graphs Section */}
+      {project.convinesensorgraph && project.convinesensorgraph.length > 0 && (
+        <div className="mt-6">
+          <h2 className="text-2xl font-bold mb-4">Combined Sensor Graphs</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {project.convinesensorgraph.map((graph) => (
+              <CombinedSensorGraphCard key={graph.id} graph={graph} project={project} />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Sending Signal Section */}
       <SignalSection
@@ -357,7 +406,7 @@ const ProjectView = () => {
           <AddSensorForm projectId={project.projectId} onSuccess={handleAddSensorSuccess} />
         </DialogContent>
       </Dialog>
-      
+
       {/* Add Signal Dialog */}
       <Dialog open={showAddSignalDialog} onOpenChange={setShowAddSignalDialog}>
         <DialogContent className="sm:max-w-[600px]">
@@ -368,6 +417,19 @@ const ProjectView = () => {
             </DialogDescription>
           </DialogHeader>
           <AddSignalForm projectId={project.projectId} onSuccess={handleAddSignalSuccess} />
+        </DialogContent>
+      </Dialog>
+
+      {/* Combine Sensors Dialog */}
+      <Dialog open={showCombineSensorsDialog} onOpenChange={setShowCombineSensorsDialog}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Combine Sensors</DialogTitle>
+            <DialogDescription>
+              Create a new graph that combines data from multiple sensors.
+            </DialogDescription>
+          </DialogHeader>
+          <CombineSensorsForm projectId={project.projectId} onSuccess={handleCombineSensorsSuccess} />
         </DialogContent>
       </Dialog>
 
@@ -385,7 +447,7 @@ const ProjectView = () => {
           </DialogContent>
         </Dialog>
       )}
-      
+
       {/* Add Button Dialog */}
       {addingButtonToSignal && (
         <Dialog open={!!addingButtonToSignal} onOpenChange={() => setAddingButtonToSignal(null)}>

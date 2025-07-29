@@ -52,6 +52,20 @@ export interface SendingSignal {
     signal: Signal[];
 }
 
+export interface CombinedSensorGraph {
+  id: string;
+  title: string;
+  sensors: { sensorid: string; sensorTitle: string }[];
+  convinegraphInfo: GraphInfo;
+}
+
+export interface AverageData {
+  sensorId: string;
+  title: string;
+  average: number;
+  dataPointCount: number;
+}
+
 export interface Project {
   projectId: string;
   projectName: string;
@@ -63,6 +77,7 @@ export interface Project {
   token: string;
   sensordata?: Sensor[];
   sendingsignal?: SendingSignal[];
+  convinesensorgraph?: CombinedSensorGraph[];
 }
 
 export interface NewSignalButtonPayload {
@@ -371,6 +386,59 @@ export const useProjects = () => {
     }
   };
 
+  const getProjectSensors = async (projectId: string) => {
+    try {
+      const data = await apiFetch(`/project/${projectId}/sensors`);
+      return data.data.sensors;
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to fetch project sensors",
+        variant: "destructive",
+      });
+      return [];
+    }
+  };
+
+  const createCombinedSensorGraph = async (projectId: string, graphData: { title: string; sensorIds: string[] }) => {
+    try {
+      const data = await apiFetch(`/project/${projectId}/combine-sensors`, {
+        method: 'POST',
+        body: JSON.stringify(graphData),
+      });
+      toast({ title: "Success", description: data.message });
+      return data.data.combinedGraph;
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to create combined graph",
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
+
+  const getCombinedGraphData = async (graphId: string, startDate?: string, endDate?: string) => {
+    try {
+      let url = `/combined-graph/${graphId}/data`;
+      const params = new URLSearchParams();
+      if (startDate) params.append('startDate', startDate);
+      if (endDate) params.append('endDate', endDate);
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+      const data = await apiFetch(url);
+      return data.data;
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to fetch combined graph data",
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
+
 
   useEffect(() => {
     if (token) {
@@ -397,6 +465,9 @@ export const useProjects = () => {
     updateButtonReleasedData,
     deleteButton,
     sendButtonData,
+    getProjectSensors,
+    createCombinedSensorGraph,
+    getCombinedGraphData,
     refetch: fetchProjects,
   };
 };

@@ -1,0 +1,102 @@
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CombinedSensorGraph, Project, SensorData, AverageData } from '@/hooks/useProjects';
+import { useProjects } from '@/hooks/useProjects';
+import { useState, useEffect } from 'react';
+import {
+    LineChart,
+    Line,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    Legend,
+    ResponsiveContainer,
+    BarChart,
+    Bar,
+} from 'recharts';
+import { DatePickerWithRange } from '@/components/ui/date-picker-with-range';
+import { DateRange } from 'react-day-picker';
+
+interface CombinedSensorGraphCardProps {
+    graph: CombinedSensorGraph;
+    project: Project;
+}
+
+const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+
+export const CombinedSensorGraphCard: React.FC<CombinedSensorGraphCardProps> = ({ graph, project }) => {
+    const [averageData, setAverageData] = useState<AverageData[]>([]);
+    const [dateRange, setDateRange] = useState<DateRange | undefined>();
+    const { getCombinedGraphData } = useProjects();
+
+    useEffect(() => {
+        const fetchData = async () => {
+            const data = await getCombinedGraphData(graph.id, dateRange?.from?.toISOString(), dateRange?.to?.toISOString());
+            if (data) {
+                setAverageData(data.results);
+            }
+        };
+        fetchData();
+    }, [graph.id, dateRange]);
+
+    const mergedData = (project.sensordata || [])
+        .filter(sensor => graph.sensors.some(s => s.sensorid === sensor.id))
+        .reduce((acc, sensor) => {
+            sensor.data.forEach(dataPoint => {
+                const existingDataPoint = acc.find(d => d.datetime === dataPoint.datetime);
+                if (existingDataPoint) {
+                    existingDataPoint[sensor.title] = dataPoint.value;
+                } else {
+                    acc.push({ datetime: dataPoint.datetime, [sensor.title]: dataPoint.value });
+                }
+            });
+            return acc;
+        }, [] as any[]);
+
+    return (
+        <Card className="col-span-1 lg:col-span-2">
+            <CardHeader>
+                <CardTitle>{graph.title}</CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
+                    <h3 className="text-lg font-semibold mb-4 text-center">Real-time Data</h3>
+                    <ResponsiveContainer width="100%" height={300}>
+                        <LineChart data={mergedData}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="datetime" />
+                            <YAxis />
+                            <Tooltip />
+                            <Legend />
+                            {graph.sensors.map((sensor, index) => (
+                                <Line
+                                    key={sensor.sensorid}
+                                    type="monotone"
+                                    dataKey={sensor.sensorTitle}
+                                    stroke={COLORS[index % COLORS.length]}
+                                />
+                            ))}
+                        </LineChart>
+                    </ResponsiveContainer>
+                </div>
+
+                <div>
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-lg font-semibold">Average Sensor Data</h3>
+                        <DatePickerWithRange value={dateRange} onChange={setDateRange} />
+                    </div>
+                    <ResponsiveContainer width="100%" height={300}>
+                        <BarChart data={averageData}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="title" />
+                            <YAxis />
+                            <Tooltip />
+                            <Legend />
+                            <Bar dataKey="average" fill="#8884d8" />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            </CardContent>
+        </Card>
+    );
+};
