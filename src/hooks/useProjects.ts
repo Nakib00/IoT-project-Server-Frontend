@@ -439,6 +439,41 @@ export const useProjects = () => {
     }
   };
 
+  const updateCombinedGraph = async (graphId: string, graphData: { title?: string; sensorIds?: string[] }) => {
+    try {
+      const data = await apiFetch(`/combined-graph/${graphId}`, {
+        method: 'PUT',
+        body: JSON.stringify(graphData),
+      });
+      toast({ title: "Success", description: data.message });
+      return data.data.combinedGraph;
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update combined graph",
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
+
+  const deleteCombinedGraph = async (graphId: string) => {
+    try {
+      const data = await apiFetch(`/combined-graph/${graphId}`, {
+        method: 'DELETE',
+      });
+      toast({ title: "Success", description: data.message });
+      return true;
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to delete combined graph",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
 
   useEffect(() => {
     if (token) {
@@ -468,6 +503,8 @@ export const useProjects = () => {
     getProjectSensors,
     createCombinedSensorGraph,
     getCombinedGraphData,
+    updateCombinedGraph,
+    deleteCombinedGraph,
     refetch: fetchProjects,
   };
 };

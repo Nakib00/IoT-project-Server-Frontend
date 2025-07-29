@@ -45,7 +45,7 @@ const ProjectView = () => {
   const [editingSignal, setEditingSignal] = useState<Signal | null>(null);
   const [addingButtonToSignal, setAddingButtonToSignal] = useState<string | null>(null);
   const [editingButton, setEditingButton] = useState<ButtonType | null>(null);
-  const { fetchProject, deleteProject, deleteSignal, deleteButton } = useProjects();
+  const { fetchProject, deleteProject, deleteSignal, deleteButton, deleteCombinedGraph } = useProjects();
   const { toast } = useToast();
   const { joinProject, leaveProject, sensorData } = useSocket();
 
@@ -110,7 +110,7 @@ const ProjectView = () => {
       });
     }
   };
-
+  
   const handleAddSensorSuccess = () => {
     setShowAddSensorDialog(false);
     loadProject();
@@ -167,6 +167,18 @@ const ProjectView = () => {
     }
   };
 
+  const handleDeleteCombinedGraph = async (graphId: string) => {
+    if (window.confirm('Are you sure you want to delete this combined graph?')) {
+      const success = await deleteCombinedGraph(graphId);
+      if (success) {
+        setProject(prev => prev ? ({
+          ...prev,
+          convinesensorgraph: prev.convinesensorgraph?.filter(g => g.id !== graphId)
+        }) : null);
+      }
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -196,8 +208,8 @@ const ProjectView = () => {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center space-x-4">
-          <Button
-            variant="outline"
+          <Button 
+            variant="outline" 
             onClick={() => navigate('/dashboard')}
             className="flex items-center space-x-2"
           >
@@ -209,7 +221,7 @@ const ProjectView = () => {
             <p className="text-muted-foreground">Project Details</p>
           </div>
         </div>
-
+        
         <div className="flex items-center space-x-2">
           <Button variant="outline" onClick={handleEdit}>
             <Edit className="h-4 w-4 mr-2" />
@@ -238,7 +250,7 @@ const ProjectView = () => {
                 <h3 className="font-semibold text-foreground mb-2">Description</h3>
                 <p className="text-muted-foreground">{project.description}</p>
               </div>
-
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <h4 className="font-medium text-foreground mb-1">Development Board</h4>
@@ -247,7 +259,7 @@ const ProjectView = () => {
                     {project.developmentBoard}
                   </Badge>
                 </div>
-
+                
                 <div>
                   <h4 className="font-medium text-foreground mb-1">Total Sensors</h4>
                   <Badge variant={project.totalsensor > 0 ? "default" : "outline"}>
@@ -272,7 +284,7 @@ const ProjectView = () => {
                   {project.totalsensor > 0 ? "Active" : "Setup Required"}
                 </Badge>
               </div>
-
+              
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Project Token</span>
                 <div className="flex items-center gap-2">
@@ -304,7 +316,7 @@ const ProjectView = () => {
                   }
                 </p>
               </div>
-
+              
               <div>
                 <p className="text-sm font-medium text-foreground">Last Updated</p>
                 <p className="text-sm text-muted-foreground">
@@ -363,7 +375,7 @@ const ProjectView = () => {
           <h2 className="text-2xl font-bold mb-4">Combined Sensor Graphs</h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {project.convinesensorgraph.map((graph) => (
-              <CombinedSensorGraphCard key={graph.id} graph={graph} project={project} />
+              <CombinedSensorGraphCard key={graph.id} graph={graph} project={project} onUpdate={loadProject} />
             ))}
           </div>
         </div>
@@ -406,7 +418,7 @@ const ProjectView = () => {
           <AddSensorForm projectId={project.projectId} onSuccess={handleAddSensorSuccess} />
         </DialogContent>
       </Dialog>
-
+      
       {/* Add Signal Dialog */}
       <Dialog open={showAddSignalDialog} onOpenChange={setShowAddSignalDialog}>
         <DialogContent className="sm:max-w-[600px]">
@@ -447,7 +459,7 @@ const ProjectView = () => {
           </DialogContent>
         </Dialog>
       )}
-
+      
       {/* Add Button Dialog */}
       {addingButtonToSignal && (
         <Dialog open={!!addingButtonToSignal} onOpenChange={() => setAddingButtonToSignal(null)}>
