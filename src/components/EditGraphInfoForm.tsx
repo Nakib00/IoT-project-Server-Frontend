@@ -4,13 +4,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useProjects, Sensor } from '@/hooks/useProjects';
+import { GraphPreview } from './GraphPreview'; // Import the new component
 
 interface EditGraphInfoFormProps {
   sensor: Sensor;
   onSuccess: () => void;
 }
 
-const GRAPH_TYPE_OPTIONS = ["line", "bar","area", "composed","scatter","stacked"];
+const GRAPH_TYPE_OPTIONS = ["line", "bar","area", "composed","scatter"];
 
 export const EditGraphInfoForm: React.FC<EditGraphInfoFormProps> = ({ sensor, onSuccess }) => {
   const [title, setTitle] = useState(sensor.graphInfo.title);
@@ -63,7 +64,10 @@ export const EditGraphInfoForm: React.FC<EditGraphInfoFormProps> = ({ sensor, on
           <SelectContent>
             {GRAPH_TYPE_OPTIONS.map((option) => (
               <SelectItem key={option} value={option}>
-                {option.charAt(0).toUpperCase() + option.slice(1)}
+                <div className="flex items-center">
+                  <GraphPreview type={option} />
+                  {option.charAt(0).toUpperCase() + option.slice(1)}
+                </div>
               </SelectItem>
             ))}
           </SelectContent>

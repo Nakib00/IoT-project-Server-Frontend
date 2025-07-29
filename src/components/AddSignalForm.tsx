@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { useProjects } from '@/hooks/useProjects';
 import { PlusCircle, XCircle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ButtonPreview } from './ButtonPreview'; // Import the new component
 
 interface AddSignalFormProps {
     projectId: string;
@@ -68,8 +69,6 @@ export const AddSignalForm: React.FC<AddSignalFormProps> = ({ projectId, onSucce
         };
 
         try {
-            // The useProjects hook needs to be updated to handle this new payload structure
-            // Assuming createSendingSignal is adapted for this
             await createSendingSignal(projectId, payload);
             onSuccess();
         } catch (error) {
@@ -125,9 +124,8 @@ export const AddSignalForm: React.FC<AddSignalFormProps> = ({ projectId, onSucce
                                     <SelectValue placeholder="Select type" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="momentary">Momentary</SelectItem>
-                                    <SelectItem value="toggle">Toggle</SelectItem>
-
+                                    <SelectItem value="momentary"><div className="flex items-center"><ButtonPreview type="momentary" /> Momentary</div></SelectItem>
+                                    <SelectItem value="toggle"><div className="flex items-center"><ButtonPreview type="toggle" /> Toggle</div></SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>

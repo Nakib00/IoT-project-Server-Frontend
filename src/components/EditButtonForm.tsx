@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useProjects, Button as ButtonType, NewSignalButtonPayload } from '@/hooks/useProjects';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ButtonPreview } from './ButtonPreview'; // Import the new component
 
 interface EditButtonFormProps {
     button: ButtonType;
@@ -91,8 +92,8 @@ export const EditButtonForm: React.FC<EditButtonFormProps> = ({ button, onSucces
                     >
                         <SelectTrigger id="edit-button-type"><SelectValue placeholder="Select type" /></SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="momentary">Momentary</SelectItem>
-                            <SelectItem value="toggle">Toggle</SelectItem>
+                            <SelectItem value="momentary"><div className="flex items-center"><ButtonPreview type="momentary" /> Momentary</div></SelectItem>
+                            <SelectItem value="toggle"><div className="flex items-center"><ButtonPreview type="toggle" /> Toggle</div></SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
