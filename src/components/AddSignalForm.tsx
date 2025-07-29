@@ -127,7 +127,7 @@ export const AddSignalForm: React.FC<AddSignalFormProps> = ({ projectId, onSucce
                                 <SelectContent>
                                     <SelectItem value="momentary">Momentary</SelectItem>
                                     <SelectItem value="toggle">Toggle</SelectItem>
-                                    <SelectItem value="touch">Touch</SelectItem>
+
                                 </SelectContent>
                             </Select>
                         </div>

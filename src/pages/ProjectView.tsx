@@ -14,6 +14,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { EditProjectForm } from '@/components/EditProjectForm';
 import { AddSensorForm } from '@/components/AddSensorForm';
 import { AddSignalForm } from '@/components/AddSignalForm';
@@ -283,24 +289,23 @@ const ProjectView = () => {
       {/* Sensors Section */}
       <div className="mt-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold">Sensors</h2>
-          <Dialog open={showAddSensorDialog} onOpenChange={setShowAddSensorDialog}>
-            <DialogTrigger asChild>
+          <h2 className="text-2xl font-bold">Sensors & Signals</h2>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
-                Add Sensor
+                Add
               </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add a New Sensor</DialogTitle>
-                <DialogDescription>
-                  Enter the details for your new sensor.
-                </DialogDescription>
-              </DialogHeader>
-              <AddSensorForm projectId={project.projectId} onSuccess={handleAddSensorSuccess} />
-            </DialogContent>
-          </Dialog>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => setShowAddSensorDialog(true)}>
+                Add Sensor
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShowAddSignalDialog(true)}>
+                Add New Signal
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         {project.sensordata && project.sensordata.length > 0 ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -317,26 +322,6 @@ const ProjectView = () => {
 
       {/* Sending Signal Section */}
       <div className="mt-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold">Sending Signal</h2>
-          <Dialog open={showAddSignalDialog} onOpenChange={setShowAddSignalDialog}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Add New Signal
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px]">
-              <DialogHeader>
-                <DialogTitle>Add New Signal</DialogTitle>
-                <DialogDescription>
-                  Configure a new signal section with buttons.
-                </DialogDescription>
-              </DialogHeader>
-              <AddSignalForm projectId={project.projectId} onSuccess={handleAddSignalSuccess} />
-            </DialogContent>
-          </Dialog>
-        </div>
         {project.sendingsignal && project.sendingsignal.length > 0 ? (
           <div className="space-y-6">
             {project.sendingsignal.map((sendingSignal) =>
@@ -400,6 +385,32 @@ const ProjectView = () => {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Add Sensor Dialog */}
+      <Dialog open={showAddSensorDialog} onOpenChange={setShowAddSensorDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add a New Sensor</DialogTitle>
+            <DialogDescription>
+              Enter the details for your new sensor.
+            </DialogDescription>
+          </DialogHeader>
+          <AddSensorForm projectId={project.projectId} onSuccess={handleAddSensorSuccess} />
+        </DialogContent>
+      </Dialog>
+      
+      {/* Add Signal Dialog */}
+      <Dialog open={showAddSignalDialog} onOpenChange={setShowAddSignalDialog}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Add New Signal</DialogTitle>
+            <DialogDescription>
+              Configure a new signal section with buttons.
+            </DialogDescription>
+          </DialogHeader>
+          <AddSignalForm projectId={project.projectId} onSuccess={handleAddSignalSuccess} />
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Signal Dialog */}
       {editingSignal && (

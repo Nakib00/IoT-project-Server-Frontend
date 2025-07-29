@@ -93,7 +93,6 @@ export const EditButtonForm: React.FC<EditButtonFormProps> = ({ button, onSucces
                         <SelectContent>
                             <SelectItem value="momentary">Momentary</SelectItem>
                             <SelectItem value="toggle">Toggle</SelectItem>
-                            <SelectItem value="touch">Touch</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>

@@ -58,7 +58,7 @@ export const SignalButton: React.FC<SignalButtonProps> = ({ button }) => {
                 <Button
                     onMouseDown={handlePress}
                     onMouseUp={handleRelease}
-                    onMouseLeave={handleRelease} // Handle case where mouse leaves while pressed
+                    onMouseLeave={handleRelease} 
                     onTouchStart={handlePress}
                     onTouchEnd={handleRelease}
                     className={cn(

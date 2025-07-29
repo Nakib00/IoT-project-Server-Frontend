@@ -67,12 +67,11 @@ export const AddButtonForm: React.FC<AddButtonFormProps> = ({ signalId, onSucces
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                     <Label htmlFor="button-type">Button Type</Label>
-                    <Select value={button.type} onValueChange={(value: 'momentary' | 'toggle' | 'touch') => handleChange('type', value)}>
+                    <Select value={button.type} onValueChange={(value: 'momentary' | 'toggle') => handleChange('type', value)}>
                         <SelectTrigger id="button-type"><SelectValue placeholder="Select type" /></SelectTrigger>
                         <SelectContent>
                             <SelectItem value="momentary">Momentary</SelectItem>
                             <SelectItem value="toggle">Toggle</SelectItem>
-                            <SelectItem value="touch">Touch</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
