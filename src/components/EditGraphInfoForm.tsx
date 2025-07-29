@@ -11,7 +11,8 @@ interface EditGraphInfoFormProps {
   onSuccess: () => void;
 }
 
-const GRAPH_TYPE_OPTIONS = ["line", "bar","area", "composed","scatter"];
+const GRAPH_TYPE_OPTIONS = ["line", "bar", "stackedBar", "horizontalBar", "area", "stackedArea", "scatter", "bubble", "pie", "doughnut", "composed", "radar", "polarArea", "histogram", "boxPlot", "heatmap", "violin", "treemap", "waterfall", "funnel", "gauge", "candlestick", "ohlc", "sankey", "choropleth", "geoScatter"
+];
 
 export const EditGraphInfoForm: React.FC<EditGraphInfoFormProps> = ({ sensor, onSuccess }) => {
   const [title, setTitle] = useState(sensor.graphInfo.title);

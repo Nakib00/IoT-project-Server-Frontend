@@ -457,6 +457,22 @@ export const useProjects = () => {
     }
   };
 
+  const updateCombinedGraphInfo = async (graphId: string, graphInfo: Partial<GraphInfo>) => {
+    try {
+      const data = await apiFetch(`/combined-graph/${graphId}/info`, {
+        method: 'PUT',
+        body: JSON.stringify(graphInfo),
+      });
+      toast({ title: "Success", description: data.message });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update combined graph info",
+        variant: "destructive",
+      });
+    }
+  };
+
   const deleteCombinedGraph = async (graphId: string) => {
     try {
       const data = await apiFetch(`/combined-graph/${graphId}`, {
@@ -504,6 +520,7 @@ export const useProjects = () => {
     createCombinedSensorGraph,
     getCombinedGraphData,
     updateCombinedGraph,
+    updateCombinedGraphInfo,
     deleteCombinedGraph,
     refetch: fetchProjects,
   };

@@ -13,6 +13,13 @@ import {
     ResponsiveContainer,
     BarChart,
     Bar,
+    AreaChart,
+    Area,
+    PieChart,
+    Pie,
+    Cell,
+    ScatterChart,
+    Scatter,
 } from 'recharts';
 import { DatePickerWithRange } from '@/components/ui/date-picker-with-range';
 import { DateRange } from 'react-day-picker';
@@ -40,16 +47,18 @@ export const CombinedSensorGraphCard: React.FC<CombinedSensorGraphCardProps> = (
     const [dateRange, setDateRange] = useState<DateRange | undefined>();
     const [showEditDialog, setShowEditDialog] = useState(false);
     const { getCombinedGraphData } = useProjects();
+    const [graphInfo, setGraphInfo] = useState(graph.convinegraphInfo);
 
     useEffect(() => {
         const fetchData = async () => {
             const data = await getCombinedGraphData(graph.id, dateRange?.from?.toISOString(), dateRange?.to?.toISOString());
             if (data) {
                 setAverageData(data.results);
+                setGraphInfo(data.convinegraphInfo);
             }
         };
         fetchData();
-    }, [graph.id, dateRange]);
+    }, [graph.id, dateRange, onUpdate]);
 
     const handleEditSuccess = () => {
         setShowEditDialog(false);
@@ -70,6 +79,127 @@ export const CombinedSensorGraphCard: React.FC<CombinedSensorGraphCardProps> = (
             return acc;
         }, [] as any[]);
 
+    const renderChart = () => {
+        switch (graphInfo.type) {
+            case 'bar':
+                return (
+                    <BarChart data={mergedData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="datetime" label={{ value: graphInfo.xAxisLabel, position: 'insideBottom', offset: 0 }} />
+                        <YAxis label={{ value: graphInfo.yAxisLabel, angle: -90, position: 'insideLeft' }} />
+                        <Tooltip />
+                        <Legend />
+                        {graph.sensors.map((sensor, index) => (
+                            <Bar key={sensor.sensorid} dataKey={sensor.sensorTitle} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                    </BarChart>
+                );
+            case 'area':
+                return (
+                    <AreaChart data={mergedData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="datetime" label={{ value: graphInfo.xAxisLabel, position: 'insideBottom', offset: 0 }} />
+                        <YAxis label={{ value: graphInfo.yAxisLabel, angle: -90, position: 'insideLeft' }} />
+                        <Tooltip />
+                        <Legend />
+                        {graph.sensors.map((sensor, index) => (
+                            <Area key={sensor.sensorid} type="monotone" dataKey={sensor.sensorTitle} stroke={COLORS[index % COLORS.length]} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                    </AreaChart>
+                );
+            case 'scatter':
+                return (
+                    <ScatterChart>
+                        <CartesianGrid />
+                        <XAxis type="category" dataKey="datetime" name="time" label={{ value: graphInfo.xAxisLabel, position: 'insideBottom' }} />
+                        <YAxis type="number" dataKey="value" name="value" label={{ value: graphInfo.yAxisLabel, angle: -90, position: 'insideLeft' }} />
+                        <Tooltip cursor={{ strokeDasharray: '3 3' }} />
+                        <Legend />
+                        {graph.sensors.map((sensor, index) => (
+                            <Scatter key={sensor.sensorid} name={sensor.sensorTitle} data={mergedData} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                    </ScatterChart>
+                );
+            default:
+                return (
+                    <LineChart data={mergedData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="datetime" label={{ value: graphInfo.xAxisLabel, position: 'insideBottom', offset: 0 }} />
+                        <YAxis label={{ value: graphInfo.yAxisLabel, angle: -90, position: 'insideLeft' }} />
+                        <Tooltip />
+                        <Legend />
+                        {graph.sensors.map((sensor, index) => (
+                            <Line
+                                key={sensor.sensorid}
+                                type="monotone"
+                                dataKey={sensor.sensorTitle}
+                                stroke={COLORS[index % COLORS.length]}
+                            />
+                        ))}
+                    </LineChart>
+                );
+        }
+    };
+
+    const renderAverageChart = () => {
+        switch (graphInfo.type) {
+            case 'line':
+                return (
+                    <LineChart data={averageData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="title" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Line dataKey="average" fill="#8884d8" />
+                    </LineChart>
+                );
+            case 'area':
+                return (
+                    <AreaChart data={averageData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="title" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Area type="monotone" dataKey="average" stroke="#8884d8" fill="#8884d8" />
+                    </AreaChart>
+                );
+            case 'pie':
+                return (
+                    <PieChart>
+                        <Pie
+                            data={averageData}
+                            dataKey="average"
+                            nameKey="title"
+                            cx="50%"
+                            cy="50%"
+                            outerRadius={80}
+                            fill="#8884d8"
+                            label
+                        >
+                            {averageData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                        </Pie>
+                        <Tooltip />
+                        <Legend />
+                    </PieChart>
+                );
+            default:
+                return (
+                    <BarChart data={averageData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="title" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Bar dataKey="average" fill="#8884d8" />
+                    </BarChart>
+                );
+        }
+    };
+
     return (
         <>
             <Card className="col-span-1 lg:col-span-2">
@@ -88,21 +218,7 @@ export const CombinedSensorGraphCard: React.FC<CombinedSensorGraphCardProps> = (
                     <div>
                         <h3 className="text-lg font-semibold mb-4 text-center">Real-time Data</h3>
                         <ResponsiveContainer width="100%" height={300}>
-                            <LineChart data={mergedData}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="datetime" />
-                                <YAxis />
-                                <Tooltip />
-                                <Legend />
-                                {graph.sensors.map((sensor, index) => (
-                                    <Line
-                                        key={sensor.sensorid}
-                                        type="monotone"
-                                        dataKey={sensor.sensorTitle}
-                                        stroke={COLORS[index % COLORS.length]}
-                                    />
-                                ))}
-                            </LineChart>
+                            {renderChart()}
                         </ResponsiveContainer>
                     </div>
 
@@ -112,14 +228,7 @@ export const CombinedSensorGraphCard: React.FC<CombinedSensorGraphCardProps> = (
                             <DatePickerWithRange value={dateRange} onChange={setDateRange} />
                         </div>
                         <ResponsiveContainer width="100%" height={300}>
-                            <BarChart data={averageData}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="title" />
-                                <YAxis />
-                                <Tooltip />
-                                <Legend />
-                                <Bar dataKey="average" fill="#8884d8" />
-                            </BarChart>
+                            {renderAverageChart()}
                         </ResponsiveContainer>
                     </div>
                 </CardContent>
